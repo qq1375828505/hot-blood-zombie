@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- school uniform collar -->
+  <path d="M18 64 L22 50 L32 54 L42 50 L46 64 Z" fill="#23233d"/>
+  <path d="M28 54 L32 60 L36 54" fill="#e8e8e8"/>
+  <!-- neck -->
+  <rect x="27" y="46" width="10" height="8" fill="#e8b48a"/>
+  <!-- face -->
+  <circle cx="32" cy="32" r="18" fill="#f0c090"/>
+  <!-- spiky dark hair -->
+  <path d="M14 30 L15 20 L21 24 L24 15 L30 21 L32 14 L35 21 L41 15 L44 24 L50 20 L50 30 L47 26 L45 20 L41 26 L35 19 L32 25 L29 19 L23 26 L19 20 L17 26 Z" fill="#1a1a2e"/>
+  <!-- angry eyebrows -->
+  <rect x="21" y="29" width="9" height="3" fill="#1a1a2e" transform="rotate(12 25 30)"/>
+  <rect x="34" y="29" width="9" height="3" fill="#1a1a2e" transform="rotate(-12 38 30)"/>
+  <!-- eyes -->
+  <rect x="23" y="34" width="5" height="5" fill="#1a1a2e"/>
+  <rect x="36" y="34" width="5" height="5" fill="#1a1a2e"/>
+  <!-- grim mouth -->
+  <rect x="25" y="44" width="14" height="2.5" fill="#7a3a2a"/>
+</svg>

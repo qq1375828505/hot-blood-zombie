@@ -1,0 +1,101 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/elite.gd" id="1_elite"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_elite"]
+size = Vector2(30, 50)
+
+[node name="Elite" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 5
+script = ExtResource("1_elite")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_elite")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Head" type="Node2D" parent="Visual"]
+position = Vector2(0, -34)
+
+[node name="Face" type="ColorRect" parent="Visual/Head"]
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+color = Color(0.6, 0.5, 0.42, 1)
+
+[node name="EyeL" type="ColorRect" parent="Visual/Head"]
+offset_left = -7.0
+offset_top = -6.0
+offset_right = -3.0
+offset_bottom = -2.0
+color = Color(1, 0.15, 0.15, 1)
+
+[node name="EyeR" type="ColorRect" parent="Visual/Head"]
+offset_left = 3.0
+offset_top = -6.0
+offset_right = 7.0
+offset_bottom = -2.0
+color = Color(1, 0.15, 0.15, 1)
+
+[node name="Mouth" type="ColorRect" parent="Visual/Head"]
+offset_left = -3.0
+offset_top = 3.0
+offset_right = 3.0
+offset_bottom = 8.0
+color = Color(0.15, 0.08, 0.1, 1)
+
+[node name="Body" type="ColorRect" parent="Visual"]
+offset_left = -10.0
+offset_top = -26.0
+offset_right = 10.0
+offset_bottom = -10.0
+color = Color(0.25, 0.12, 0.45, 1)
+
+[node name="ArmL" type="Node2D" parent="Visual"]
+position = Vector2(-10, -24)
+
+[node name="PartL" type="ColorRect" parent="Visual/ArmL"]
+offset_left = -2.0
+offset_top = 0.0
+offset_right = 2.0
+offset_bottom = 18.0
+color = Color(0.6, 0.5, 0.42, 1)
+
+[node name="ArmR" type="Node2D" parent="Visual"]
+position = Vector2(10, -24)
+
+[node name="PartR" type="ColorRect" parent="Visual/ArmR"]
+offset_left = -2.0
+offset_top = 0.0
+offset_right = 2.0
+offset_bottom = 18.0
+color = Color(0.6, 0.5, 0.42, 1)
+
+[node name="LegL" type="Node2D" parent="Visual"]
+position = Vector2(-6, -10)
+
+[node name="PartL" type="ColorRect" parent="Visual/LegL"]
+offset_left = -3.0
+offset_top = 0.0
+offset_right = 3.0
+offset_bottom = 10.0
+color = Color(0.2, 0.2, 0.24, 1)
+
+[node name="LegR" type="Node2D" parent="Visual"]
+position = Vector2(6, -10)
+
+[node name="PartR" type="ColorRect" parent="Visual/LegR"]
+offset_left = -3.0
+offset_top = 0.0
+offset_right = 3.0
+offset_bottom = 10.0
+color = Color(0.2, 0.2, 0.24, 1)
+
+[node name="Weapon" type="ColorRect" parent="Visual"]
+offset_left = -2.0
+offset_top = -28.0
+offset_right = 2.0
+offset_bottom = -2.0
+color = Color(0.72, 0.72, 0.78, 1)

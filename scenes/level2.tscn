@@ -1,0 +1,452 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/destructible.gd" id="2_destr"]
+[ext_resource type="Script" path="res://scripts/item_pickup.gd" id="3_pickup"]
+[ext_resource type="PackedScene" path="res://scenes/zombie.tscn" id="4_zombie"]
+
+[sub_resource type="RectangleShape2D" id="shape_desk"]
+size = Vector2(36, 20)
+
+[sub_resource type="RectangleShape2D" id="shape_extinguisher"]
+size = Vector2(14, 30)
+
+[sub_resource type="RectangleShape2D" id="shape_locker"]
+size = Vector2(24, 44)
+
+[sub_resource type="RectangleShape2D" id="shape_pickup"]
+size = Vector2(28, 18)
+
+[sub_resource type="RectangleShape2D" id="shape_wall"]
+size = Vector2(40, 1200)
+
+[node name="Level" type="Node2D"]
+script = ExtResource("1_level")
+level_index = 2
+
+[node name="FarLayer" type="Node2D" parent="."]
+z_index = -10
+
+[node name="SkyTop" type="ColorRect" parent="FarLayer"]
+offset_right = 1280.0
+offset_bottom = 280.0
+color = Color(0.10, 0.12, 0.17, 1)
+
+[node name="SkyMid" type="ColorRect" parent="FarLayer"]
+offset_top = 220.0
+offset_right = 1280.0
+offset_bottom = 450.0
+color = Color(0.16, 0.19, 0.24, 1)
+
+[node name="SchoolBldg" type="Node2D" parent="FarLayer"]
+
+[node name="MainHall" type="ColorRect" parent="FarLayer/SchoolBldg"]
+offset_left = 80.0
+offset_top = 180.0
+offset_right = 520.0
+offset_bottom = 495.0
+color = Color(0.23, 0.27, 0.32, 1)
+
+[node name="Gym" type="ColorRect" parent="FarLayer/SchoolBldg"]
+offset_left = 560.0
+offset_top = 230.0
+offset_right = 900.0
+offset_bottom = 495.0
+color = Color(0.20, 0.23, 0.28, 1)
+
+[node name="Wing" type="ColorRect" parent="FarLayer/SchoolBldg"]
+offset_left = 930.0
+offset_top = 200.0
+offset_right = 1230.0
+offset_bottom = 495.0
+color = Color(0.23, 0.27, 0.32, 1)
+
+[node name="WinRow1" type="ColorRect" parent="FarLayer/SchoolBldg"]
+offset_left = 110.0
+offset_top = 220.0
+offset_right = 490.0
+offset_bottom = 232.0
+color = Color(0.55, 0.62, 0.70, 0.45)
+
+[node name="WinRow2" type="ColorRect" parent="FarLayer/SchoolBldg"]
+offset_left = 110.0
+offset_top = 280.0
+offset_right = 490.0
+offset_bottom = 292.0
+color = Color(0.55, 0.62, 0.70, 0.35)
+
+[node name="GymDome" type="ColorRect" parent="FarLayer/SchoolBldg"]
+offset_left = 600.0
+offset_top = 205.0
+offset_right = 860.0
+offset_bottom = 235.0
+color = Color(0.18, 0.21, 0.26, 1)
+
+[node name="Sakura" type="Node2D" parent="FarLayer"]
+
+[node name="SakuraTrunk1" type="ColorRect" parent="FarLayer/Sakura"]
+offset_left = 30.0
+offset_top = 380.0
+offset_right = 40.0
+offset_bottom = 495.0
+color = Color(0.25, 0.18, 0.14, 1)
+
+[node name="SakuraCrown1" type="ColorRect" parent="FarLayer/Sakura"]
+offset_left = 5.0
+offset_top = 300.0
+offset_right = 70.0
+offset_bottom = 390.0
+color = Color(0.86, 0.62, 0.72, 1)
+
+[node name="SakuraTrunk2" type="ColorRect" parent="FarLayer/Sakura"]
+offset_left = 1210.0
+offset_top = 390.0
+offset_right = 1220.0
+offset_bottom = 495.0
+color = Color(0.25, 0.18, 0.14, 1)
+
+[node name="SakuraCrown2" type="ColorRect" parent="FarLayer/Sakura"]
+offset_left = 1165.0
+offset_top = 310.0
+offset_right = 1245.0
+offset_bottom = 400.0
+color = Color(0.86, 0.62, 0.72, 1)
+
+[node name="MidLayer" type="Node2D" parent="."]
+z_index = -5
+
+[node name="CorridorFloor" type="ColorRect" parent="MidLayer"]
+offset_top = 478.0
+offset_right = 1280.0
+offset_bottom = 500.0
+color = Color(0.42, 0.44, 0.42, 1)
+
+[node name="FloorStripe" type="ColorRect" parent="MidLayer"]
+offset_top = 496.0
+offset_right = 1280.0
+offset_bottom = 500.0
+color = Color(0.80, 0.72, 0.30, 1)
+
+[node name="Lockers" type="Node2D" parent="MidLayer"]
+
+[node name="LockerBank" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 100.0
+offset_top = 380.0
+offset_right = 480.0
+offset_bottom = 478.0
+color = Color(0.55, 0.66, 0.55, 1)
+
+[node name="LockerSeams" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 100.0
+offset_top = 430.0
+offset_right = 480.0
+offset_bottom = 433.0
+color = Color(0.35, 0.42, 0.35, 1)
+
+[node name="ClassroomDoor1" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 560.0
+offset_top = 350.0
+offset_right = 630.0
+offset_bottom = 478.0
+color = Color(0.30, 0.24, 0.20, 1)
+
+[node name="ClassroomGlass1" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 566.0
+offset_top = 360.0
+offset_right = 624.0
+offset_bottom = 410.0
+color = Color(0.60, 0.78, 0.85, 0.55)
+
+[node name="ClassroomDoor2" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 1080.0
+offset_top = 350.0
+offset_right = 1150.0
+offset_bottom = 478.0
+color = Color(0.30, 0.24, 0.20, 1)
+
+[node name="ClassroomGlass2" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 1086.0
+offset_top = 360.0
+offset_right = 1144.0
+offset_bottom = 410.0
+color = Color(0.60, 0.78, 0.85, 0.55)
+
+[node name="Stairs" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 820.0
+offset_top = 420.0
+offset_right = 900.0
+offset_bottom = 478.0
+color = Color(0.50, 0.50, 0.48, 1)
+
+[node name="Bulletin" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 700.0
+offset_top = 330.0
+offset_right = 780.0
+offset_bottom = 390.0
+color = Color(0.35, 0.32, 0.28, 1)
+
+[node name="BulletinPaper1" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 706.0
+offset_top = 336.0
+offset_right = 726.0
+offset_bottom = 356.0
+color = Color(0.85, 0.45, 0.40, 1)
+
+[node name="BulletinPaper2" type="ColorRect" parent="MidLayer/Lockers"]
+offset_left = 734.0
+offset_top = 340.0
+offset_right = 760.0
+offset_bottom = 360.0
+color = Color(0.45, 0.70, 0.85, 1)
+
+[node name="CeilingLights" type="Node2D" parent="MidLayer"]
+
+[node name="Light1" type="ColorRect" parent="MidLayer/CeilingLights" groups=["flicker"]]
+offset_left = 200.0
+offset_top = 120.0
+offset_right = 360.0
+offset_bottom = 132.0
+color = Color(0.95, 0.95, 0.80, 1)
+
+[node name="Light2" type="ColorRect" parent="MidLayer/CeilingLights" groups=["flicker"]]
+offset_left = 640.0
+offset_top = 120.0
+offset_right = 800.0
+offset_bottom = 132.0
+color = Color(0.95, 0.95, 0.80, 1)
+
+[node name="Light3" type="ColorRect" parent="MidLayer/CeilingLights" groups=["flicker"]]
+offset_left = 1000.0
+offset_top = 120.0
+offset_right = 1160.0
+offset_bottom = 132.0
+color = Color(0.95, 0.95, 0.80, 1)
+
+[node name="Props" type="Node2D" parent="."]
+
+[node name="Destructibles" type="Node2D" parent="Props"]
+
+[node name="Desk1" type="StaticBody2D" parent="Props/Destructibles"]
+position = Vector2(240, 470)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("2_destr")
+
+[node name="Body" type="ColorRect" parent="Props/Destructibles/Desk1"]
+offset_left = -18.0
+offset_top = -10.0
+offset_right = 18.0
+offset_bottom = 10.0
+color = Color(0.55, 0.40, 0.25, 1)
+
+[node name="HitArea" type="Area2D" parent="Props/Destructibles/Desk1"]
+collision_layer = 0
+collision_mask = 1
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Destructibles/Desk1/HitArea"]
+shape = SubResource("shape_desk")
+
+[node name="Desk2" type="StaticBody2D" parent="Props/Destructibles"]
+position = Vector2(560, 470)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("2_destr")
+
+[node name="Body" type="ColorRect" parent="Props/Destructibles/Desk2"]
+offset_left = -18.0
+offset_top = -10.0
+offset_right = 18.0
+offset_bottom = 10.0
+color = Color(0.50, 0.36, 0.22, 1)
+
+[node name="HitArea" type="Area2D" parent="Props/Destructibles/Desk2"]
+collision_layer = 0
+collision_mask = 1
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Destructibles/Desk2/HitArea"]
+shape = SubResource("shape_desk")
+
+[node name="Extinguisher" type="StaticBody2D" parent="Props/Destructibles"]
+position = Vector2(820, 460)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("2_destr")
+item_type = "food_onigiri"
+
+[node name="Body" type="ColorRect" parent="Props/Destructibles/Extinguisher"]
+offset_left = -7.0
+offset_top = -15.0
+offset_right = 7.0
+offset_bottom = 15.0
+color = Color(0.85, 0.18, 0.15, 1)
+
+[node name="HitArea" type="Area2D" parent="Props/Destructibles/Extinguisher"]
+collision_layer = 0
+collision_mask = 1
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Destructibles/Extinguisher/HitArea"]
+shape = SubResource("shape_extinguisher")
+
+[node name="LockerDoor" type="StaticBody2D" parent="Props/Destructibles"]
+position = Vector2(1120, 455)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("2_destr")
+
+[node name="Body" type="ColorRect" parent="Props/Destructibles/LockerDoor"]
+offset_left = -12.0
+offset_top = -22.0
+offset_right = 12.0
+offset_bottom = 22.0
+color = Color(0.55, 0.66, 0.55, 1)
+
+[node name="HitArea" type="Area2D" parent="Props/Destructibles/LockerDoor"]
+collision_layer = 0
+collision_mask = 1
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Destructibles/LockerDoor/HitArea"]
+shape = SubResource("shape_locker")
+
+[node name="Pickups" type="Node2D" parent="Props"]
+
+[node name="WeaponMG" type="Area2D" parent="Props/Pickups"]
+position = Vector2(360, 478)
+item_type = "weapon_mg"
+script = ExtResource("3_pickup")
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Pickups/WeaponMG"]
+shape = SubResource("shape_pickup")
+
+[node name="Glow" type="ColorRect" parent="Props/Pickups/WeaponMG"]
+offset_left = -16.0
+offset_top = -10.0
+offset_right = 16.0
+offset_bottom = 2.0
+color = Color(0.267, 0.867, 1.0, 0.25)
+
+[node name="Gun" type="ColorRect" parent="Props/Pickups/WeaponMG"]
+offset_left = -12.0
+offset_top = -6.0
+offset_right = 12.0
+offset_bottom = -2.0
+color = Color(0.2, 0.2, 0.22, 1)
+
+[node name="WeaponShotgun" type="Area2D" parent="Props/Pickups"]
+position = Vector2(700, 478)
+item_type = "weapon_shotgun"
+script = ExtResource("3_pickup")
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Pickups/WeaponShotgun"]
+shape = SubResource("shape_pickup")
+
+[node name="Glow" type="ColorRect" parent="Props/Pickups/WeaponShotgun"]
+offset_left = -16.0
+offset_top = -10.0
+offset_right = 16.0
+offset_bottom = 2.0
+color = Color(1.0, 0.667, 0.2, 0.25)
+
+[node name="Gun" type="ColorRect" parent="Props/Pickups/WeaponShotgun"]
+offset_left = -14.0
+offset_top = -6.0
+offset_right = 14.0
+offset_bottom = -2.0
+color = Color(0.2, 0.2, 0.22, 1)
+
+[node name="FoodDrink" type="Area2D" parent="Props/Pickups"]
+position = Vector2(980, 480)
+item_type = "food_drink"
+script = ExtResource("3_pickup")
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Pickups/FoodDrink"]
+shape = SubResource("shape_pickup")
+
+[node name="Bottle" type="ColorRect" parent="Props/Pickups/FoodDrink"]
+offset_left = -4.0
+offset_top = -9.0
+offset_right = 4.0
+offset_bottom = 1.0
+color = Color(0.2, 0.5, 0.9, 1)
+
+[node name="FoodOnigiri" type="Area2D" parent="Props/Pickups"]
+position = Vector2(180, 480)
+item_type = "food_onigiri"
+script = ExtResource("3_pickup")
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Pickups/FoodOnigiri"]
+shape = SubResource("shape_pickup")
+
+[node name="Rice" type="ColorRect" parent="Props/Pickups/FoodOnigiri"]
+offset_left = -7.0
+offset_top = -7.0
+offset_right = 7.0
+offset_bottom = 1.0
+color = Color(0.95, 0.95, 0.95, 1)
+
+[node name="IdleZombies" type="Node2D" parent="Props"]
+
+[node name="Idle1" parent="Props/IdleZombies" instance=ExtResource("4_zombie")]
+position = Vector2(430, 470)
+
+[node name="Idle2" parent="Props/IdleZombies" instance=ExtResource("4_zombie")]
+position = Vector2(760, 470)
+
+[node name="HairFix" parent="Props/IdleZombies" instance=ExtResource("4_zombie")]
+position = Vector2(1050, 470)
+groups = ["hair_fix"]
+
+[node name="NearLayer" type="Node2D" parent="."]
+z_index = 5
+
+[node name="Book1" type="ColorRect" parent="NearLayer"]
+offset_left = 60.0
+offset_top = 585.0
+offset_right = 100.0
+offset_bottom = 595.0
+color = Color(0.70, 0.35, 0.35, 1)
+
+[node name="Book2" type="ColorRect" parent="NearLayer"]
+offset_left = 70.0
+offset_top = 598.0
+offset_right = 108.0
+offset_bottom = 608.0
+color = Color(0.35, 0.45, 0.70, 1)
+
+[node name="Backpack" type="ColorRect" parent="NearLayer"]
+offset_left = 130.0
+offset_top = 575.0
+offset_right = 170.0
+offset_bottom = 620.0
+color = Color(0.30, 0.40, 0.30, 1)
+
+[node name="Can1" type="ColorRect" parent="NearLayer"]
+offset_left = 200.0
+offset_top = 605.0
+offset_right = 212.0
+offset_bottom = 615.0
+color = Color(0.667, 0.667, 0.7, 1)
+
+[node name="DoorFrame" type="ColorRect" parent="NearLayer"]
+offset_left = 1230.0
+offset_top = 200.0
+offset_right = 1250.0
+offset_bottom = 720.0
+color = Color(0.25, 0.20, 0.16, 1)
+
+[node name="Boundaries" type="Node2D" parent="."]
+
+[node name="WallLeft" type="StaticBody2D" parent="Boundaries"]
+position = Vector2(-100, 360)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Boundaries/WallLeft"]
+shape = SubResource("shape_wall")
+
+[node name="WallRight" type="StaticBody2D" parent="Boundaries"]
+position = Vector2(1380, 360)
+collision_layer = 1
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape2D" parent="Boundaries/WallRight"]
+shape = SubResource("shape_wall")

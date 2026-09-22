@@ -1,0 +1,55 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/achievement_panel.gd" id="1_panel"]
+
+[node name="AchievementPanel" type="CanvasLayer"]
+layer = 11
+script = ExtResource("1_panel")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1280.0
+offset_bottom = 720.0
+color = Color(0, 0, 0, 0.8)
+
+[node name="Panel" type="ColorRect" parent="."]
+offset_left = 240.0
+offset_top = 80.0
+offset_right = 1040.0
+offset_bottom = 640.0
+color = Color(0.12, 0.12, 0.15, 1)
+
+[node name="TitleLabel" type="Label" parent="."]
+offset_left = 490.0
+offset_top = 95.0
+offset_right = 790.0
+offset_bottom = 135.0
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+text = "成就"
+horizontal_alignment = 1
+
+[node name="ProgressLabel" type="Label" parent="."]
+offset_left = 440.0
+offset_top = 140.0
+offset_right = 840.0
+offset_bottom = 165.0
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+text = "已解锁 0 / 8"
+horizontal_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+offset_left = 280.0
+offset_top = 180.0
+offset_right = 1000.0
+offset_bottom = 590.0
+
+[node name="List" type="VBoxContainer" parent="ScrollContainer"]
+
+[node name="CloseButton" type="Button" parent="."]
+offset_left = 890.0
+offset_top = 600.0
+offset_right = 1000.0
+offset_bottom = 632.0
+theme_override_font_sizes/font_size = 18
+text = "关闭"

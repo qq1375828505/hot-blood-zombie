@@ -1,0 +1,394 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/touch_controls.gd" id="1_tc"]
+
+[node name="TouchControls" type="CanvasLayer"]
+script = ExtResource("1_tc")
+
+[node name="JoyArea" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 36.0
+offset_top = -236.0
+offset_right = 236.0
+offset_bottom = -36.0
+mouse_filter = 2
+
+[node name="JoyBase" type="ColorRect" parent="JoyArea"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -60.0
+offset_right = 60.0
+offset_bottom = 60.0
+mouse_filter = 2
+color = Color(0.22, 0.22, 0.28, 0.55)
+
+[node name="JoyKnob" type="ColorRect" parent="JoyArea/JoyBase"]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 30.0
+offset_right = 90.0
+offset_bottom = 90.0
+mouse_filter = 2
+color = Color(0.55, 0.55, 0.65, 0.95)
+
+[node name="BtnShoot" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = -140.0
+offset_right = -28.0
+offset_bottom = -28.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnShoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.62, 0.16, 0.16, 0.92)
+
+[node name="Label" type="Label" parent="BtnShoot"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -17.0
+offset_right = 50.0
+offset_bottom = 17.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 26
+text = "射击"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnJump" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -130.0
+offset_top = -252.0
+offset_right = -38.0
+offset_bottom = -160.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnJump"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.18, 0.18, 0.22, 0.82)
+
+[node name="Label" type="Label" parent="BtnJump"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -15.0
+offset_right = 40.0
+offset_bottom = 15.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "跳跃"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnMelee" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -118.0
+offset_right = -150.0
+offset_bottom = -38.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnMelee"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.18, 0.18, 0.22, 0.82)
+
+[node name="Label" type="Label" parent="BtnMelee"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -36.0
+offset_top = -14.0
+offset_right = 36.0
+offset_bottom = 14.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "近战"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnSpecial" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -220.0
+offset_right = -150.0
+offset_bottom = -140.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnSpecial"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.18, 0.18, 0.22, 0.82)
+
+[node name="Label" type="Label" parent="BtnSpecial"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -36.0
+offset_top = -14.0
+offset_right = 36.0
+offset_bottom = 14.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "必杀"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnCrouch" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -320.0
+offset_right = -150.0
+offset_bottom = -240.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnCrouch"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.18, 0.18, 0.22, 0.82)
+
+[node name="Label" type="Label" parent="BtnCrouch"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -36.0
+offset_top = -14.0
+offset_right = 36.0
+offset_bottom = 14.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "下蹲"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnRestart" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -84.0
+offset_top = 56.0
+offset_right = -24.0
+offset_bottom = 116.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnRestart"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.18, 0.18, 0.22, 0.82)
+
+[node name="Label" type="Label" parent="BtnRestart"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -30.0
+offset_top = -12.0
+offset_right = 30.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+text = "重开"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnShop" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -160.0
+offset_top = 56.0
+offset_right = -96.0
+offset_bottom = 120.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnShop"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.18, 0.18, 0.22, 0.82)
+
+[node name="Label" type="Label" parent="BtnShop"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -32.0
+offset_top = -12.0
+offset_right = 32.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+text = "$"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnPause" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -70.0
+offset_top = 56.0
+offset_right = -14.0
+offset_bottom = 112.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnPause"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.18, 0.18, 0.22, 0.82)
+
+[node name="Label" type="Label" parent="BtnPause"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -28.0
+offset_top = -12.0
+offset_right = 28.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "II"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnInteract" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -110.0
+offset_right = -248.0
+offset_bottom = -38.0
+mouse_filter = 2
+
+[node name="Bg" type="ColorRect" parent="BtnInteract"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.18, 0.18, 0.22, 0.82)
+
+[node name="Label" type="Label" parent="BtnInteract"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -36.0
+offset_top = -12.0
+offset_right = 36.0
+offset_bottom = 12.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 16
+text = "互"
+horizontal_alignment = 1
+vertical_alignment = 1

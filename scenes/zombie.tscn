@@ -1,0 +1,101 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/zombie.gd" id="1_zombie"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_zombie"]
+size = Vector2(26, 40)
+
+[node name="Zombie" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_zombie")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_zombie")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Head" type="Node2D" parent="Visual"]
+position = Vector2(0, -31)
+
+[node name="Face" type="ColorRect" parent="Visual/Head"]
+offset_left = -9.0
+offset_top = -9.0
+offset_right = 9.0
+offset_bottom = 9.0
+color = Color(0.45, 0.55, 0.38, 1)
+
+[node name="EyeL" type="ColorRect" parent="Visual/Head"]
+offset_left = -6.0
+offset_top = -5.0
+offset_right = -3.0
+offset_bottom = -1.0
+color = Color(0.9, 0.1, 0.1, 1)
+
+[node name="EyeR" type="ColorRect" parent="Visual/Head"]
+offset_left = 3.0
+offset_top = -5.0
+offset_right = 6.0
+offset_bottom = -1.0
+color = Color(0.9, 0.1, 0.1, 1)
+
+[node name="Mouth" type="ColorRect" parent="Visual/Head"]
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 3.0
+offset_bottom = 7.0
+color = Color(0.15, 0.08, 0.1, 1)
+
+[node name="Body" type="ColorRect" parent="Visual"]
+offset_left = -9.0
+offset_top = -22.0
+offset_right = 9.0
+offset_bottom = -8.0
+color = Color(0.52, 0.38, 0.72, 1)
+
+[node name="ArmL" type="Node2D" parent="Visual"]
+position = Vector2(-9, -20)
+
+[node name="ArmForeL" type="ColorRect" parent="Visual/ArmL"]
+offset_left = -2.0
+offset_top = 0.0
+offset_right = 2.0
+offset_bottom = 16.0
+color = Color(0.45, 0.55, 0.38, 1)
+
+[node name="ArmR" type="Node2D" parent="Visual"]
+position = Vector2(9, -20)
+
+[node name="ArmForeR" type="ColorRect" parent="Visual/ArmR"]
+offset_left = -2.0
+offset_top = 0.0
+offset_right = 2.0
+offset_bottom = 16.0
+color = Color(0.45, 0.55, 0.38, 1)
+
+[node name="LegL" type="Node2D" parent="Visual"]
+position = Vector2(-5, -8)
+
+[node name="LegForeL" type="ColorRect" parent="Visual/LegL"]
+offset_left = -3.0
+offset_top = 0.0
+offset_right = 3.0
+offset_bottom = 8.0
+color = Color(0.2, 0.2, 0.24, 1)
+
+[node name="LegR" type="Node2D" parent="Visual"]
+position = Vector2(5, -8)
+
+[node name="LegForeR" type="ColorRect" parent="Visual/LegR"]
+offset_left = -3.0
+offset_top = 0.0
+offset_right = 3.0
+offset_bottom = 8.0
+color = Color(0.2, 0.2, 0.24, 1)
+
+[node name="BegLabel" type="Label" parent="Visual"]
+position = Vector2(-7, -90)
+theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+theme_override_font_sizes/font_size = 28
+text = "?"
+visible = false

@@ -1,0 +1,88 @@
+name: Godot CI 打包
+
+# 推送/PR 到 main 或 master 时自动执行：
+# 1) 无头导入检查（脚本/场景零错误）
+# 2) 冒烟测试（tests/smoke.gd 全部断言）
+# 3) 安卓 APK 导出（debug 签名，可直接安装验证）
+# 4) 打 tag（v*.*.*）时自动发布 GitHub Release 附带 APK
+#
+# 原理：使用官方 barichello/godot-ci:4.3 镜像，内置 Godot 4.3 headless、
+# Android SDK、JDK17 与导出模板，无需本地任何打包环境。
+# 本地只维护源码，推送到 GitHub 后由 Actions 完成全部构建。
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: 导入检查与冒烟测试
+    runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.3
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 无头导入（检查脚本/场景错误）
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          godot --headless --import 2>&1 | tail -5
+
+      - name: 运行冒烟测试
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          godot --headless --path . --script res://tests/smoke.gd 2>&1 | tail -8
+
+  export-android:
+    name: 导出安卓 APK
+    needs: test
+    runs-on: ubuntu-latest
+    container: barichello/godot-ci:4.3
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 准备 debug keystore
+        run: |
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
+            keytool -keyalg RSA -genkeypair -alias androiddebugkey \
+              -keypass android -storepass android \
+              -keystore ~/.android/debug.keystore \
+              -dname "CN=Android Debug,O=Android,C=US" -validity 9999
+          fi
+
+      - name: 导出 APK（debug 签名）
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p build/android
+          godot --headless --export-debug "Android" "build/android/hot-blood-zombie.apk" 2>&1 | tail -15
+          ls -la build/android/
+
+      - name: 上传 APK 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/android/hot-blood-zombie.apk
+          if-no-files-found: error
+
+  release:
+    name: 发布 Release（打 tag 时）
+    needs: export-android
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载 APK 产物
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: build/android/
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/android/hot-blood-zombie.apk
+          generate_release_notes: true
