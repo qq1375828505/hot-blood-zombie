@@ -42,9 +42,9 @@ func _make_card(char_id: String, data: Dictionary) -> Control:
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.18, 0.16, 0.22, 1)
-	style.border_color = Color(0.4, 0.35, 0.5, 1)
-	style.set_border_width_all(2)
+	style.bg_color = Color(0.05, 0.05, 0.08, 1)
+	style.border_color = Color(1, 0.2, 0.6, 1)  # 洋红边框
+	style.set_border_width_all(3)
 	style.set_content_margin_all(8)
 	card.add_theme_stylebox_override("panel", style)
 
@@ -168,9 +168,9 @@ func _mark_card(card: Control, char_id: String) -> void:
 		return
 	var is_p1 := CharacterData.selected_p1 == char_id
 	if is_p1:
-		st.border_color = Color(1, 0.85, 0.3, 1)  # P1：黄色
+		st.border_color = Color(1, 0.85, 0.2, 1)  # P1：黄色
 	else:
-		st.border_color = Color(0.4, 0.35, 0.5, 1)  # 未选中：灰紫
+		st.border_color = Color(1, 0.2, 0.6, 1)  # 未选中：洋红
 
 
 func _on_start() -> void:

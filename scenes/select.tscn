@@ -24,13 +24,13 @@ script = ExtResource("1_select")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.15, 0.1, 0.25, 1)
+color = Color(0.05, 0.05, 0.08, 1)
 
 [node name="BGTop" type="ColorRect" parent="."]
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 380.0
-color = Color(0.2, 0.12, 0.3, 0.5)
+color = Color(0.2, 0.05, 0.15, 0.6)
 
 [node name="TitleBar" type="VBoxContainer" parent="."]
 anchors_preset = 10
@@ -40,9 +40,11 @@ offset_bottom = 120.0
 theme_override_constants/separation = 8
 
 [node name="TitleLabel" type="Label" parent="TitleBar"]
-theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
-theme_override_font_sizes/font_size = 32
-text = "热血物语：末日丧尸 — 选择你的角色"
+theme_override_colors/font_color = Color(0.95, 0.15, 0.35, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 36
+text = "选 择 战 斗 员"
 horizontal_alignment = 1
 
 [node name="SubTitleLabel" type="Label" parent="TitleBar"]
