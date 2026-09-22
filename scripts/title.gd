@@ -7,13 +7,12 @@ extends Control
 @onready var title_gold: Label = $TitleLayer/TitleGold
 
 var _blink: float = 0.0
-var _can_advance: bool = false
+var _can_advance: bool = true
 
 
 func _ready() -> void:
-	# 开场停 0.8 秒后才允许按键进入，避免误触
-	await get_tree().create_timer(0.8).timeout
-	_can_advance = true
+	# 立即允许进入，不等延时（安卓触摸卡死修复）
+	pass
 
 
 func _process(delta: float) -> void:
@@ -22,12 +21,13 @@ func _process(delta: float) -> void:
 		press_label.modulate.a = 0.4 + 0.6 * (0.5 + 0.5 * sin(_blink))
 
 
-func _unhandled_input(event: InputEvent) -> void:
+# 用 _input 而非 _unhandled_input，双保险确保触摸事件被捕获
+func _input(event: InputEvent) -> void:
 	if not _can_advance:
 		return
 	if event is InputEventScreenTouch and event.pressed:
 		_advance()
-	elif event.is_action_pressed("ui_accept") or event.is_action_pressed("restart"):
+	elif event is InputEventMouseButton and event.pressed:
 		_advance()
 	elif event is InputEventKey and event.pressed:
 		_advance()
