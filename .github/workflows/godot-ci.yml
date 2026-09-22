@@ -17,6 +17,9 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: write
+
 jobs:
   test:
     name: 导入检查与冒烟测试
