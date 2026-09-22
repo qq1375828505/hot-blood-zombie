@@ -552,7 +552,12 @@ func _on_item_picked(item_type: String) -> void:
 		"chili_rice":
 			player.add_buff("chili_rice", 15.0)
 		"iron_pipe":
-			player.add_buff("iron_pipe", 20.0)
+			# V2.1：iron_pipe 现为近战武器（不再是 buff），装备到最近存活玩家
+			_get_nearest_alive_player(player.global_position).equip_melee_weapon("iron_pipe")
+		"tire":
+			_get_nearest_alive_player(player.global_position).equip_melee_weapon("tire")
+		"trash_lid":
+			_get_nearest_alive_player(player.global_position).equip_melee_weapon("trash_lid")
 		"armor_vest":
 			player.add_buff("armor_vest", 20.0)
 		"ammo":
@@ -567,15 +572,13 @@ func _on_item_picked(item_type: String) -> void:
 
 
 func _refill_ammo() -> void:
+	# V2.1：pistol 为无限弹药副武器，不需要补 ammo；仅补 machine_gun/shotgun
 	var target := player.current_weapon
 	if target == "pistol" or target == "grenade":
 		target = "machine_gun"
 	var mx := player.get_weapon_max_ammo(target)
-	if mx > 0:
-		var add := 10
-		if player.current_weapon == "pistol":
-			add = 30
-		player.weapon_ammo[target] = mini(int(player.weapon_ammo.get(target, 0)) + add, mx)
+	if mx > 0 and player.current_weapon != "pistol":
+		player.weapon_ammo[target] = mini(int(player.weapon_ammo.get(target, 0)) + 10, mx)
 	player._refresh_ammo_hud()
 
 
@@ -606,15 +609,22 @@ func _on_zombie_died(z: Node2D) -> void:
 	hud.set_score(score)
 	# V1.1 掉落物/能量给最近存活玩家
 	var recipient: Player = _get_nearest_alive_player(z.global_position)
+	# V2.1：普通丧尸不再掉 ammo，改为 50% 能量 + 50% 金币
 	if randf() < 0.5:
-		recipient.add_ammo(3)
-	else:
 		recipient.add_energy(15.0)
-	# 10% 概率掉落随机 buff 道具
+	else:
+		Economy.add_coins(randi_range(5, 10))
+	# 10% 概率掉落随机 buff 道具（V2.1：过滤掉 iron_pipe，它现在是武器不是 buff）
 	if randf() < 0.10:
-		var pool: Array = BuffDefs.DROP_POOL
-		var bt: String = str(pool[randi() % pool.size()])
-		_spawn_buff_drop(z.global_position, bt)
+		var pool: Array = BuffDefs.DROP_POOL.filter(func(b: Variant) -> bool: return str(b) != "iron_pipe")
+		if not pool.is_empty():
+			var bt: String = str(pool[randi() % pool.size()])
+			_spawn_buff_drop(z.global_position, bt)
+	# V2.1：精英/Boss 死亡 15% 概率掉落实用枪械（machine_gun/shotgun）
+	if z.is_in_group("elites") or z.is_in_group("boss"):
+		if randf() < 0.15:
+			var wt: String = "weapon_mg" if randf() < 0.5 else "weapon_shotgun"
+			_spawn_buff_drop(z.global_position, wt)
 	# ---- V1.2 金币掉落（按丧尸类型，不影响既有掉落物/buff/能量逻辑）----
 	if z is Zombie:
 		match z.ztype:
@@ -745,7 +755,11 @@ func spawn_boss(pos: Vector2, boss_id: String = "street_boss") -> Node:
 				hud.set_boss_hp(boss.hp, boss.max_hp, ph))
 	if boss.has_signal("died"):
 		boss.died.connect(func(_b: Node2D) -> void:
-			hud.hide_boss_bar())
+			hud.hide_boss_bar()
+			# V2.1：Boss 死亡 15% 概率掉落实用枪械
+			if randf() < 0.15:
+				var wt: String = "weapon_mg" if randf() < 0.5 else "weapon_shotgun"
+				_spawn_buff_drop(_b.global_position, wt))
 	# V2.0：HUD 血条名称从 Boss 定义读取（不再写死）
 	var boss_def: Dictionary = EnemyDefs.get_boss_def(boss_id)
 	var boss_name: String = String(boss_def.get("name", boss_id))
@@ -769,5 +783,9 @@ func spawn_elite(elite_id: String, pos: Vector2) -> Node:
 			kills += 1
 			score += 50
 			hud.set_kills(kills)
-			hud.set_score(score))
+			hud.set_score(score)
+			# V2.1：精英死亡 15% 概率掉落实用枪械
+			if randf() < 0.15:
+				var wt: String = "weapon_mg" if randf() < 0.5 else "weapon_shotgun"
+				_spawn_buff_drop(_eb.global_position, wt))
 	return e

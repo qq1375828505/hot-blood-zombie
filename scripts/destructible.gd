@@ -62,13 +62,27 @@ func _spawn_drop() -> void:
 	cs.shape = shape
 	drop.add_child(cs)
 
-	# 掉落物视觉（弹药盒/金币）
+	# 掉落物视觉（弹药盒/金币/近战武器）
 	var vr := ColorRect.new()
-	vr.color = Color(1.0, 0.85, 0.3, 1.0) if item_type == "coin" else Color(0.9, 0.7, 0.2, 1.0)
-	vr.offset_left = -8.0
-	vr.offset_top = -5.0
-	vr.offset_right = 8.0
-	vr.offset_bottom = 5.0
+	var drop_size := Vector2(16, 10)
+	match item_type:
+		"coin":
+			vr.color = Color(1.0, 0.85, 0.3, 1.0)
+		"iron_pipe":
+			vr.color = Color(0.7, 0.7, 0.72, 1.0)  # 银灰
+			drop_size = Vector2(22, 6)
+		"tire":
+			vr.color = Color(0.08, 0.08, 0.08, 1.0)  # 黑
+			drop_size = Vector2(20, 20)
+		"trash_lid":
+			vr.color = Color(0.15, 0.35, 0.2, 1.0)  # 深绿
+			drop_size = Vector2(18, 18)
+		_:
+			vr.color = Color(0.9, 0.7, 0.2, 1.0)  # 弹药盒
+	vr.offset_left = -drop_size.x / 2.0
+	vr.offset_top = -drop_size.y / 2.0
+	vr.offset_right = drop_size.x / 2.0
+	vr.offset_bottom = drop_size.y / 2.0
 	drop.add_child(vr)
 
 	# 弹出动画：上抛后落地

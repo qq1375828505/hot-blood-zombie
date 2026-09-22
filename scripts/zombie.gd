@@ -3,7 +3,7 @@ extends CharacterBody2D
 # 丧尸：三种类型（步行 / 疾跑 / 胖子），追踪玩家并近身撕咬
 # 附带随机荒谬行为：发呆 / 整理头发 / 互殴 / 偷吃
 
-enum Type { WALKER, RUNNER, FAT }
+enum Type { WALKER, RUNNER, FAT, DELINQUENT, BOSOZOKU }
 
 const GRAVITY := 980.0
 const WALK_SPEED := 70.0
@@ -89,10 +89,43 @@ var _eye_orig_r: Color = Color(1, 1, 1)
 # ---- V1.3 同类互殴吞噬回血 ----
 var _brawl_heal_accum: float = 0.0
 
-# 荒谬行为状态机：none / zone_out / fix_hair / brawl / snack
+# 荒谬行为状态机：none / zone_out / fix_hair / brawl / snack / look_at_watch / argue
 var silly_state := "none"
 var silly_timer := 0.0
 var _silly_tween: Tween
+
+# =====================================================================
+# V2.1 人形敌（DELINQUENT / BOSOZOKU）：人味化行为
+# 求饶/逃跑/内讧/发呆 + 打残收服援护
+# =====================================================================
+var humanoid: bool = false          # 是否人形敌
+var can_flee: bool = false          # 是否会逃跑
+var flee_hp_ratio: float = 0.3      # 逃跑触发血量比例
+var personality: String = ""        # 收服援护性格标签
+var fleeing: bool = false          # 逃跑状态
+var _flee_timer: float = 0.0
+var _brawl_partner: Node2D = null  # 本次互殴对象（用于内讧记仇）
+const FLEE_DURATION := 2.0
+const FLEE_SPEED_MULT := 1.3
+const FLEE_MELEE_TO_BEG_CHANCE := 0.40
+# 生气（内讧记仇）
+var _angry: bool = false
+var _anger_timer: float = 0.0
+var _angry_target: Node2D = null
+const ANGER_SPEED_MULT := 1.2
+const ANGER_DURATION := 3.0
+# BOSOZOKU 冲刺攻击（独立于 runner dash）
+var _boso_dash_cooldown: float = 0.0
+var _boso_dash_state: String = "none"   # none / telegraph / dash / recover
+var _boso_dash_timer: float = 0.0
+var _boso_dash_dir: float = 1.0
+const BOSO_DASH_TELEGRAPH := 0.5
+const BOSO_DASH_DURATION := 0.3
+const BOSO_DASH_SPEED_MULT := 2.8
+const BOSO_DASH_COOLDOWN := 5.0
+const BOSO_DASH_RECOVER := 0.5
+const BOSO_DASH_RANGE := 140.0
+const BOSO_DASH_DAMAGE := 25.0
 
 var _anim_time := 0.0
 var _hurt_tween: Tween
@@ -137,6 +170,21 @@ func setup(t: Type, target: Node2D) -> void:
 			speed = FAT_SPEED
 			body_rect.color = Color(0.62, 0.42, 0.22)
 			visual.scale = Vector2(1.7, 1.15)
+		Type.DELINQUENT:
+			# V2.1 丧尸化不良少年：学兰黑制服 + 飞机头
+			hp = 5
+			speed = 90
+			body_rect.color = Color(0.15, 0.15, 0.2)
+			visual.scale = Vector2.ONE
+			head.scale.y = 1.3
+		Type.BOSOZOKU:
+			# V2.1 丧尸化暴走族：特攻服深色 + 染红眼
+			hp = 8
+			speed = 130
+			body_rect.color = Color(0.25, 0.1, 0.1)
+			visual.scale = Vector2(1.1, 1.05)
+			eye_l.color = Color(1.0, 0.25, 0.2)
+			eye_r.color = Color(1.0, 0.25, 0.2)
 	max_hp = hp
 
 	# V1.3：从 EnemyDefs 数据驱动读取能力档位 / 吸血 / 躲避参数
@@ -148,6 +196,10 @@ func setup(t: Type, target: Node2D) -> void:
 			_type_name = "runner"
 		Type.FAT:
 			_type_name = "fat"
+		Type.DELINQUENT:
+			_type_name = "delinquent"
+		Type.BOSOZOKU:
+			_type_name = "bosozoku"
 	var def: Dictionary = EnemyDefs.get_normal_def(_type_name)
 	lifesteal_rate = float(def.get("lifesteal_rate", 0.05))
 	dodge_chance = float(def.get("dodge_chance", 0.40))
@@ -158,6 +210,14 @@ func setup(t: Type, target: Node2D) -> void:
 	base_ability = float(def.get("ability", 0.5))
 	burst_ability = float(def.get("burst_ability", 2.0))
 	current_ability = base_ability
+	# V2.1 人形敌参数
+	humanoid = bool(def.get("humanoid", false))
+	can_flee = bool(def.get("can_flee", false))
+	flee_hp_ratio = float(def.get("flee_hp_ratio", 0.3))
+	if ztype == Type.DELINQUENT:
+		personality = "懦弱小弟"
+	elif ztype == Type.BOSOZOKU:
+		personality = "暴躁大哥"
 	_zid = randf() * TAU
 	_surround_role = randf()
 	# 记录眼睛原色（冲锋前摇会临时染红，结束后恢复）
@@ -182,14 +242,28 @@ func _physics_process(delta: float) -> void:
 	special_cooldown = maxf(special_cooldown - delta, 0.0)
 	dodge_cooldown_timer = maxf(dodge_cooldown_timer - delta, 0.0)
 	dash_cooldown_timer = maxf(dash_cooldown_timer - delta, 0.0)
+	_boso_dash_cooldown = maxf(_boso_dash_cooldown - delta, 0.0)
+	# V2.1 内讧记仇：怒气计时到期自动解除
+	if _angry:
+		_anger_timer -= delta
+		if _anger_timer <= 0.0:
+			_angry = false
+			_angry_target = null
 
 	var want_track: bool = player and is_instance_valid(player) and not player.dead
 	var dir := 0.0
 	if want_track:
 		dir = signf(player.global_position.x - global_position.x)
+	# V2.1 生气时若记仇对象仍在，优先朝它移动（否则朝玩家）
+	if _angry and _angry_target and is_instance_valid(_angry_target):
+		var zt: Zombie = _angry_target as Zombie
+		if zt and not zt.dying:
+			dir = signf(zt.global_position.x - global_position.x)
 
 	# V1.3 疾跑冲锋状态机（前摇红眼 / 高速冲锋），在普通追踪之前驱动
 	_process_runner_dash(delta, want_track)
+	# V2.1 BOSOZOKU 冲刺攻击状态机
+	_process_bosozoku_dash(delta, want_track)
 
 	if silly_state != "none":
 		# 荒谬行为进行中：不追踪玩家、不攻击
@@ -199,26 +273,38 @@ func _physics_process(delta: float) -> void:
 		if silly_timer <= 0.0:
 			_end_silly()
 	else:
-		_maybe_start_silly(delta, dir)
-		if silly_state == "none":
+		# V2.1 人形敌：残血逃跑（仅 can_flee 类型），优先于 silly/普通追踪
+		_try_start_flee(delta)
+		if fleeing:
+			_update_flee(delta, want_track)
+		else:
+			_maybe_start_silly(delta, dir)
+		if not fleeing and silly_state == "none":
 			if dash_state == "telegraph":
 				# 冲锋前摇：僵住蓄力（红眼在 _process_runner_dash 中处理）
 				velocity.x = 0.0
 			elif is_dodging:
 				# V1.3 躲避：侧移优先，覆盖普通追踪
 				_process_dodge_move(delta)
+			elif _boso_dash_state != "none":
+				# V2.1 BOSOZOKU 冲刺：速度由 _process_bosozoku_dash 覆盖
+				pass
 			elif _knockback_timer > 0.0:
 				# V1.3 扛伤：受击后撤窗口
 				_knockback_timer -= delta
 				velocity.x = _knockback_vx
 			else:
 				velocity.x = dir * speed
+				if _angry:
+					# V2.1 内讧记仇：生气时速度 ×1.2
+					velocity.x = dir * speed * ANGER_SPEED_MULT
 				if runner_dashing:
 					# V1.3 爆发：冲锋速度叠加（speed × 2.5）
 					velocity.x = dash_dir * speed * DASH_SPEED_MULT
 				if dir != 0.0:
 					visual.scale.x = dir * absf(visual.scale.x)
 				if want_track and attack_cooldown <= 0.0 \
+						and _boso_dash_state == "none" \
 						and absf(player.global_position.x - global_position.x) < 42.0 \
 						and absf(player.global_position.y - global_position.y) < 64.0:
 					var contact_dmg := 10
@@ -231,7 +317,7 @@ func _physics_process(delta: float) -> void:
 					if not player.dead:
 						apply_lifesteal(contact_dmg)
 		# V1.3 包围：成群时部分丧尸叠加上下包抄视觉偏移
-		if silly_state == "none" and not is_dodging:
+		if silly_state == "none" and not is_dodging and not fleeing and _boso_dash_state == "none":
 			_apply_surround_offset(delta, want_track)
 
 	# ---- V1.1 FAT 撕咬突进：覆盖正常追踪速度（不干扰 begging/silly 状态）----
@@ -247,11 +333,19 @@ func _physics_process(delta: float) -> void:
 func _maybe_start_silly(delta: float, dir: float) -> void:
 	if dir == 0.0:
 		return
+	# V2.1 人形敌所有 silly 行为触发概率 ×1.5（人味更浓）
+	var silly_mult := 1.5 if humanoid else 1.0
 	# 5%/秒 发呆；2%/秒 偷吃
-	if randf() < 0.05 * delta:
+	if randf() < 0.05 * silly_mult * delta:
 		_start_zone_out()
-	elif randf() < 0.02 * delta:
+	elif randf() < 0.02 * silly_mult * delta:
 		_start_snack()
+	# V2.1 人形敌专属荒谬行为：看表 2%/秒；对空气争论 3%/秒
+	if humanoid and silly_state == "none":
+		if randf() < 0.02 * delta:
+			_start_look_at_watch()
+		elif randf() < 0.03 * delta:
+			_start_argue()
 	if silly_state == "none":
 		_try_brawl(delta)
 
@@ -270,22 +364,47 @@ func _start_snack() -> void:
 	velocity.x = 0.0
 
 
+# V2.1 人形敌：抬腕看表
+func _start_look_at_watch() -> void:
+	silly_state = "look_at_watch"
+	silly_timer = 1.2
+	velocity.x = 0.0
+	arm_l.rotation = -2.5  # 抬腕
+	head.rotation = 0.2    # 微低
+
+
+# V2.1 人形敌：对着空气争论
+func _start_argue() -> void:
+	silly_state = "argue"
+	silly_timer = 1.5
+	velocity.x = 0.0
+	mouth.scale = Vector2(1.5, 1.5)  # 嘴巴大张
+
+
 func _start_brawl() -> void:
 	silly_state = "brawl"
 	silly_timer = 1.0
 	velocity.x = 0.0
 	_brawl_heal_accum = 0.0  # V1.3 互殴吞噬回血累计器
+	# V2.1 人形敌互殴时互相"吵嘴"
+	if humanoid:
+		var lines := ["看什么看！", "想干架？", "你瞅啥！"]
+		_speak(lines[randi() % lines.size()], 1.0)
 
 
 func _try_brawl(delta: float) -> void:
-	# 3%/秒，与身边 40px 内的另一只丧尸互殴
-	if randf() >= 0.03 * delta:
+	# 默认 3%/秒，与身边 40px 内的另一只丧尸互殴；人形敌 8%/秒、60px
+	var brawl_rate := 0.03
+	var best := 40.0
+	if humanoid:
+		brawl_rate = 0.08
+		best = 60.0
+	if randf() >= brawl_rate * delta:
 		return
 	var par := get_parent()
 	if par == null:
 		return
 	var other: Zombie = null
-	var best := 40.0
 	for c in par.get_children():
 		if c == self or not c is Zombie:
 			continue
@@ -297,6 +416,7 @@ func _try_brawl(delta: float) -> void:
 			best = d
 			other = z
 	if other != null:
+		_brawl_partner = other  # V2.1 记录互殴对象（用于内讧记仇）
 		_start_brawl()
 		other._start_brawl()
 
@@ -305,6 +425,7 @@ func _end_silly() -> void:
 	eye_l.rotation = 0.0
 	eye_r.rotation = 0.0
 	head.rotation = 0.0
+	var was_brawl: bool = (silly_state == "brawl")
 	if silly_state == "zone_out" and randf() < 0.30:
 		# 发呆后 30% 概率整理头发
 		silly_state = "fix_hair"
@@ -317,8 +438,14 @@ func _end_silly() -> void:
 	silly_state = "none"
 	arm_l.rotation = 1.45
 	arm_r.rotation = 1.45
+	mouth.scale = Vector2.ONE  # V2.1 复位 argue 张大的嘴
 	if _silly_tween and _silly_tween.is_valid():
 		_silly_tween.kill()
+	# V2.1 人形敌互殴结束后 30% 概率进入"生气"（记仇）
+	if was_brawl and humanoid and randf() < 0.30:
+		_angry = true
+		_anger_timer = ANGER_DURATION
+		_angry_target = _brawl_partner
 
 
 func _update_silly_anim(delta: float) -> void:
@@ -345,6 +472,14 @@ func _update_silly_anim(delta: float) -> void:
 			visual.rotation = 0.0
 			head.rotation = 0.35 + sin(_anim_time * 12.0) * 0.05
 			visual.position.y = 0.0
+		"look_at_watch":
+			# V2.1 抬腕看表：手臂上举（_start 已设 arm_l=-2.5），身体基本静止
+			visual.rotation = 0.0
+			visual.position.y = 0.0
+		"argue":
+			# V2.1 对空气争论：身体左右摇晃
+			visual.rotation = sin(_anim_time * 8.0) * 0.15
+			visual.position.y = 0.0
 
 
 func _update_walk_anim(delta: float, moving: bool) -> void:
@@ -369,6 +504,10 @@ func take_damage(dmg: int, is_melee: bool = false) -> void:
 	if dying or begging:
 		return
 	hp -= dmg
+	# V2.1 人形敌受击：15% 概率弹出短痛呼气泡
+	if humanoid and hp > 0 and randf() < 0.15:
+		var hurt_lines := ["痛！", "哇！", "该死！"]
+		_speak(hurt_lines[randi() % hurt_lines.size()], 0.5)
 	# V1.3 扛伤：霸体帧不闪红（仅扣血）；普通丧尸受击闪红
 	if not super_armor:
 		visual.modulate = Color(1.0, 0.55, 0.55, 1.0)
@@ -389,18 +528,34 @@ func take_damage(dmg: int, is_melee: bool = false) -> void:
 			facing = 1.0
 		_knockback_vx = -facing * KNOCKBACK_SPEED * (1.0 - stun_resist)
 		_knockback_timer = KNOCKBACK_DURATION
+		if humanoid:
+			# V2.1 人形敌被击飞更夸张：身体旋转 ±0.3rad
+			visual.rotation = -facing * 0.3
+	# V2.1 荒谬行为进行中被命中：20% 概率被"惊醒"直接结束 silly 进入追击
+	if hp > 0 and silly_state != "none" and randf() < 0.20:
+		_end_silly()
 	# V1.3 躲避：子弹命中触发（近战不触发），连续被命中达阈值强制躲避
 	if not is_melee and hp > 0 and silly_state == "none":
 		consecutive_hits += 1
 		if dodge_cooldown_timer <= 0.0:
 			if randf() < dodge_chance or consecutive_hits >= hit_streak_threshold:
 				start_dodge()
+	# V2.1 人形敌求饶血量阈值：普通 2，不良少年 3，暴走族 4
+	var beg_threshold := CAPTURE_THRESHOLD
+	if ztype == Type.DELINQUENT:
+		beg_threshold = 3
+	elif ztype == Type.BOSOZOKU:
+		beg_threshold = 4
 	if hp <= 0:
 		died.emit(self)
 		_start_death_anim()
-	elif is_melee and hp > 0 and hp <= CAPTURE_THRESHOLD:
-		# 最后一击为近战且残血进入求饶
-		_enter_begging()
+	elif is_melee and hp > 0:
+		if fleeing and randf() < FLEE_MELEE_TO_BEG_CHANCE:
+			# V2.1 逃跑中被近战命中 40% 概率直接求饶
+			_enter_begging()
+		elif hp <= beg_threshold:
+			# 最后一击为近战且残血进入求饶
+			_enter_begging()
 
 
 # ---- V1.1 求饶状态 ----
@@ -421,6 +576,9 @@ func _enter_begging() -> void:
 	head.rotation = 0.2
 	# 求饶指示
 	beg_label.visible = true
+	# V2.1 求饶台词气泡（人形敌更会求饶，普通丧尸也可出声）
+	var beg_lines := ["饶命！", "我投降！", "别打了！", "大哥我错了！"]
+	_speak(beg_lines[randi() % beg_lines.size()], 1.5)
 	# 从 zombies 组移除：必杀/手雷 AOE 不再命中求饶丧尸
 	remove_from_group("zombies")
 
@@ -436,6 +594,12 @@ func capture() -> Dictionary:
 		Type.FAT:
 			dmg = 18
 			nm = "FAT"
+		Type.DELINQUENT:
+			dmg = 12
+			nm = "Delinquent"
+		Type.BOSOZOKU:
+			dmg = 20
+			nm = "Bosozoku"
 		_:
 			dmg = 10
 			nm = "Walker"
@@ -447,7 +611,12 @@ func capture() -> Dictionary:
 		if is_instance_valid(self):
 			queue_free()
 	)
-	return {"type": ztype, "name": nm, "damage": dmg}
+	var ret := {"type": ztype, "name": nm, "damage": dmg}
+	# V2.1 人形敌援护：携带性格标签
+	if humanoid:
+		ret["humanoid"] = true
+		ret["personality"] = personality
+	return ret
 
 
 func _start_death_anim() -> void:
@@ -458,6 +627,10 @@ func _start_death_anim() -> void:
 		_hurt_tween.kill()
 	if _silly_tween and _silly_tween.is_valid():
 		_silly_tween.kill()
+	# V2.1 人形敌死亡 20% 概率说出最后遗言
+	if humanoid and randf() < 0.20:
+		var last_words := ["我还会回来的...", "老大..."]
+		_speak(last_words[randi() % last_words.size()], 1.0)
 	var t := create_tween()
 	t.set_parallel(true)
 	t.tween_property(visual, "rotation", -PI / 2.0, 0.4)
@@ -566,7 +739,7 @@ func get_current_ability() -> float:
 
 # 每帧根据是否处于爆发状态更新能力档位（标注层，不改 V1.0 常量）
 func _update_current_ability() -> void:
-	if lunging or runner_dashing or dash_state == "telegraph":
+	if lunging or runner_dashing or dash_state == "telegraph" or _boso_dash_state != "none":
 		current_ability = burst_ability
 	else:
 		current_ability = base_ability
@@ -673,3 +846,117 @@ func _restore_eye_color() -> void:
 		eye_l.color = _eye_orig_l
 	if is_instance_valid(eye_r):
 		eye_r.color = _eye_orig_r
+
+
+# =====================================================================
+# V2.1 人形敌：台词气泡 / 逃跑 / BOSOZOKU 冲刺攻击
+# =====================================================================
+
+# 在头顶动态生成一行台词气泡，life 秒后自动销毁
+func _speak(text: String, life: float) -> void:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_color_override("font_color", Color(1, 1, 1))
+	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	lbl.add_theme_constant_override("outline_size", 3)
+	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.position = Vector2(-45, -125)
+	visual.add_child(lbl)
+	var tw := create_tween()
+	tw.tween_interval(life)
+	tw.tween_callback(func() -> void:
+		if is_instance_valid(lbl):
+			lbl.queue_free()
+	)
+
+
+# 逃跑触发：仅 can_flee 类型、血量 <= 30% 时，每帧 5% 概率进入逃跑
+func _try_start_flee(delta: float) -> void:
+	if fleeing or dying or begging:
+		return
+	if not can_flee:
+		return
+	if hp <= 0 or hp > max_hp * flee_hp_ratio:
+		return
+	if not (player and is_instance_valid(player) and not player.dead):
+		return
+	if randf() < 0.05 * delta:
+		fleeing = true
+		_flee_timer = FLEE_DURATION
+
+
+# 逃跑移动：远离玩家、速度 ×1.3、身体前倾 ±0.1、手臂后摆；2 秒后恢复
+func _update_flee(delta: float, want_track: bool) -> void:
+	_flee_timer -= delta
+	var away := 1.0
+	if want_track:
+		away = signf(global_position.x - player.global_position.x)
+		if away == 0.0:
+			away = 1.0
+		velocity.x = away * speed * FLEE_SPEED_MULT
+		visual.rotation = away * 0.1  # 身体前倾
+		arm_l.rotation = -1.4         # 手臂向后摆
+		arm_r.rotation = -1.4
+	else:
+		velocity.x = 0.0
+	if _flee_timer <= 0.0:
+		# 自动恢复追踪（若仍残血，下一帧仍可能再次触发逃跑）
+		fleeing = false
+		visual.rotation = 0.0
+		arm_l.rotation = 1.45
+		arm_r.rotation = 1.45
+
+
+# BOSOZOKU 冲刺攻击：前摇 0.5s（红眼+下沉）→ 冲锋 0.3s（×2.8，接触25）→ 0.5s 硬直
+func _process_bosozoku_dash(delta: float, want_track: bool) -> void:
+	if dying or begging or ztype != Type.BOSOZOKU or fleeing:
+		return
+	match _boso_dash_state:
+		"telegraph":
+			velocity.x = 0.0
+			visual.position.y = 3.0  # 身体下沉
+			_boso_dash_timer -= delta
+			if _boso_dash_timer <= 0.0:
+				_boso_dash_state = "dash"
+				_boso_dash_timer = BOSO_DASH_DURATION
+		"dash":
+			velocity.x = _boso_dash_dir * speed * BOSO_DASH_SPEED_MULT
+			visual.rotation = _boso_dash_dir * 0.1
+			_boso_dash_timer -= delta
+			# 冲锋接触伤害
+			if want_track and attack_cooldown <= 0.0:
+				if absf(player.global_position.x - global_position.x) < 40.0 \
+						and absf(player.global_position.y - global_position.y) < 64.0:
+					player.take_damage(int(BOSO_DASH_DAMAGE))
+					attack_cooldown = 0.8
+					if not player.dead:
+						apply_lifesteal(int(BOSO_DASH_DAMAGE))
+			if _boso_dash_timer <= 0.0:
+				_boso_dash_state = "recover"
+				_boso_dash_timer = BOSO_DASH_RECOVER
+				visual.rotation = 0.0
+				visual.position.y = 0.0
+				_restore_eye_color()
+		"recover":
+			# 冲刺后 0.5 秒硬直（不追踪）
+			velocity.x = 0.0
+			_boso_dash_timer -= delta
+			if _boso_dash_timer <= 0.0:
+				_boso_dash_state = "none"
+				_boso_dash_cooldown = BOSO_DASH_COOLDOWN
+		_:
+			if _boso_dash_cooldown > 0.0:
+				return
+			if not want_track:
+				return
+			var dx: float = player.global_position.x - global_position.x
+			var dy: float = player.global_position.y - global_position.y
+			if absf(dx) < BOSO_DASH_RANGE and absf(dy) < 80.0:
+				_boso_dash_state = "telegraph"
+				_boso_dash_timer = BOSO_DASH_TELEGRAPH
+				_boso_dash_dir = signf(dx)
+				if _boso_dash_dir == 0.0:
+					_boso_dash_dir = 1.0
+				# 前摇：眼睛变红（原色在 _restore_eye_color 恢复）
+				eye_l.color = Color(1, 0.1, 0.1)
+				eye_r.color = Color(1, 0.1, 0.1)

@@ -80,6 +80,37 @@ const CHARGE_DAMAGE := 8
 const COMBO_DAMAGES := [2, 3, 5]  # 第 1/2/3 段
 var _melee_swing_tween: Tween
 
+# ---- V2.1 踢击系统 ----
+var kick_count: int = 0
+var kick_cooldown: float = 0.0
+const KICK_COOLDOWN_TIME := 0.3
+const KICK_DAMAGES := [3, 4]  # 第 1/2 段踢
+const JUMP_KICK_DAMAGE := 6
+const JUMP_KICK_LAND_HARDSTUN := 0.2
+const KICK_RANGE_MULT := 1.2
+var jump_kick_hardstun: float = 0.0
+
+# ---- V2.1 拳脚交替奖励 ----
+var combo_last_type: String = ""  # "punch" / "kick" / ""
+var combo_alt_count: int = 0
+const COMBO_ALT_BONUS := 1.5
+
+# ---- V2.1 冲刺拳（方向键双击 → dash → 冲刺拳）----
+var dash_active: bool = false
+var dash_timer: float = 0.0
+const DASH_DURATION := 0.2
+const DASH_SPEED_MULT := 2.0
+const DASH_PUNCH_DAMAGE := 7
+var _dash_clock: float = 0.0
+var _dash_press_dir: float = 0.0
+var _dash_press_time: float = -999.0
+var _prev_axis: float = 0.0
+
+# ---- V2.1 近战武器（日用品当武器）----
+var equipped_melee_weapon: String = ""
+var melee_weapon_durability: int = 0
+var current_melee_range_mult: float = 1.0  # 本次 melee_requested 的范围倍率（game.gd 读取）
+
 # ---- V1.0 buff ----
 var active_buffs: Dictionary = {}  # name -> 剩余秒数
 var _buff_ui_timer := 0.0
@@ -213,10 +244,16 @@ func _physics_process(delta: float) -> void:
 	# 冷却 / 连击窗口 / buff 倒计时（无论生死都推进，死时也无害）
 	shoot_cooldown = maxf(shoot_cooldown - delta, 0.0)
 	blood_spray_cooldown = maxf(blood_spray_cooldown - delta, 0.0)
+	kick_cooldown = maxf(kick_cooldown - delta, 0.0)
+	jump_kick_hardstun = maxf(jump_kick_hardstun - delta, 0.0)
+	_dash_clock += delta
 	if combo_timer > 0.0:
 		combo_timer = maxf(combo_timer - delta, 0.0)
 		if combo_timer <= 0.0:
 			combo_count = 0
+			kick_count = 0
+			combo_last_type = ""
+			combo_alt_count = 0
 	_update_buffs(delta)
 
 	if dead:
@@ -277,7 +314,23 @@ func _physics_process(delta: float) -> void:
 	# ---- V1.1 半尸化：不能下蹲 + 移速降低（载具内不生效）----
 	if half_zombie and not in_vehicle:
 		crouching = false
+	# ---- V2.1 方向键双击检测（dash）----
+	if dir != 0.0 and _prev_axis == 0.0 and not dash_active:
+		var sdir := signf(dir)
+		if sdir == _dash_press_dir and (_dash_clock - _dash_press_time) < 0.3:
+			dash_active = true
+			dash_timer = DASH_DURATION
+		_dash_press_dir = sdir
+		_dash_press_time = _dash_clock
+	_prev_axis = dir
+	# ---- V2.1 dash 状态推进 ----
+	if dash_active:
+		dash_timer = maxf(dash_timer - delta, 0.0)
+		if dash_timer <= 0.0:
+			dash_active = false
 	var speed := SPEED * get_buff_multiplier("speed") * (0.5 if crouching else 1.0)
+	if dash_active:
+		speed *= DASH_SPEED_MULT
 	velocity.x = dir * speed
 	if half_zombie and not in_vehicle:
 		velocity.x *= HALF_ZOMBIE_SPEED_MULT
@@ -305,7 +358,13 @@ func _physics_process(delta: float) -> void:
 	_update_expression(delta)
 
 	if _is_shoot_pressed():
-		_try_shoot()
+		# V2.1：空中按 shoot = 跳踢；地面按 shoot = 有枪射击 / 无枪踢击
+		if not is_on_floor():
+			_try_jump_kick()
+		elif has_gun_equipped():
+			_try_shoot()
+		else:
+			_try_kick()
 
 	# ---- V1.1 半尸化：血腥喷射代替射击（按住持续喷射，0.1s 间隔）----
 	if half_zombie and not in_vehicle:
@@ -482,6 +541,17 @@ func _refresh_ammo_hud() -> void:
 	grenade_changed.emit(int(weapon_ammo.get("grenade", 0)))
 
 
+# ---- V2.1 判断当前是否装备了可射击的枪械（非 pistol 且弹药 > 0）----
+# 用于区分 shoot 键是"射击"还是"踢击"
+func has_gun_equipped() -> bool:
+	if half_zombie:
+		return false
+	if current_weapon == "pistol":
+		return false
+	var cur: int = int(weapon_ammo.get(current_weapon, 0))
+	return cur > 0
+
+
 func _try_shoot() -> void:
 	if half_zombie:  # V1.1 半尸化：锁武器，不发射子弹
 		return
@@ -518,9 +588,46 @@ func _try_shoot() -> void:
 
 
 # ---- V1.0 格斗连击 / 蓄力 ----
+# V2.1 扩展：dash 期间触发冲刺拳；装备近战武器时改为武器挥舞；
+# 否则走原拳连击/蓄力逻辑。拳踢交替时第 3 击伤害 ×1.5。
 func _resolve_melee() -> void:
 	if dead:
 		return
+	# ---- V2.1 冲刺拳（dash 期间按 melee）----
+	if dash_active:
+		dash_active = false
+		dash_timer = 0.0
+		current_melee_damage = DASH_PUNCH_DAMAGE
+		current_melee_range_mult = 1.0
+		velocity.x += facing * 300.0
+		_temp_expr = "grin"
+		_expr_timer = 0.5
+		_play_melee_anim(1, true)
+		_register_combo_alt("punch")
+		current_melee_damage = int(round(float(current_melee_damage) * char_atk_mult))
+		if combo_alt_count >= 3:
+			current_melee_damage = int(round(float(current_melee_damage) * COMBO_ALT_BONUS))
+		melee_requested.emit(global_position, Vector2(facing, 0.0))
+		return
+	# ---- V2.1 近战武器挥舞（装备日用品武器后 melee 键改为挥武器）----
+	if equipped_melee_weapon != "":
+		var wdef: Dictionary = Weapons.MELEE_WEAPONS.get(equipped_melee_weapon, {})
+		var wdmg: int = int(wdef.get("damage", 4))
+		current_melee_range_mult = float(wdef.get("range_mult", 1.0))
+		current_melee_damage = int(round(float(wdmg) * char_atk_mult))
+		melee_weapon_durability -= 1
+		_temp_expr = "grin"
+		_expr_timer = 0.5
+		_play_melee_anim(1, false)
+		_register_combo_alt("punch")
+		if combo_alt_count >= 3:
+			current_melee_damage = int(round(float(current_melee_damage) * COMBO_ALT_BONUS))
+		melee_requested.emit(global_position, Vector2(facing, 0.0))
+		if melee_weapon_durability <= 0:
+			_break_melee_weapon()
+		return
+	# ---- 原拳连击 / 蓄力（徒手）----
+	current_melee_range_mult = 1.0
 	if charge_time >= CHARGE_THRESHOLD:
 		# 蓄力重击
 		current_melee_damage = CHARGE_DAMAGE
@@ -540,8 +647,101 @@ func _resolve_melee() -> void:
 		_play_melee_anim(side, combo_count == 3)
 	# V1.2：角色攻击倍率作用于近战伤害（不改 COMBO/CHARGE 基线常量）
 	current_melee_damage = int(round(float(current_melee_damage) * char_atk_mult))
-	var d := Vector2(facing, 0.0)
-	melee_requested.emit(global_position, d)
+	_register_combo_alt("punch")
+	if combo_alt_count >= 3:
+		current_melee_damage = int(round(float(current_melee_damage) * COMBO_ALT_BONUS))
+	melee_requested.emit(global_position, Vector2(facing, 0.0))
+
+
+# ---- V2.1 拳脚交替计数：追踪拳/踢交替，第 3 次交替击触发 ×1.5 ----
+func _register_combo_alt(attack_type: String) -> void:
+	if combo_last_type != "" and combo_last_type != attack_type and combo_timer > 0.0:
+		combo_alt_count += 1
+	else:
+		combo_alt_count = 1
+	combo_last_type = attack_type
+	combo_timer = COMBO_WINDOW
+
+
+# ---- V2.1 踢击（shoot 键在无枪时触发）----
+func _try_kick() -> void:
+	if dead or kick_cooldown > 0.0 or half_zombie:
+		return
+	kick_cooldown = KICK_COOLDOWN_TIME
+	kick_count = (kick_count % 2) + 1
+	current_melee_damage = KICK_DAMAGES[kick_count - 1]
+	current_melee_range_mult = KICK_RANGE_MULT
+	_register_combo_alt("kick")
+	current_melee_damage = int(round(float(current_melee_damage) * char_atk_mult))
+	if combo_alt_count >= 3:
+		current_melee_damage = int(round(float(current_melee_damage) * COMBO_ALT_BONUS))
+	_temp_expr = "grin"
+	_expr_timer = 0.4
+	var leg: Node2D = leg_r
+	if leg and _melee_swing_tween and _melee_swing_tween.is_valid():
+		_melee_swing_tween.kill()
+	_melee_swing_tween = create_tween()
+	_anim_tweens.append(_melee_swing_tween)
+	_melee_swing_tween.tween_property(leg, "rotation", -0.8, 0.08)
+	_melee_swing_tween.tween_property(leg, "rotation", 0.0, 0.14)
+	velocity.x += facing * 120.0
+	melee_requested.emit(global_position, Vector2(facing, 0.0))
+
+
+# ---- V2.1 跳踢（空中按 shoot）----
+func _try_jump_kick() -> void:
+	if dead or half_zombie:
+		return
+	current_melee_damage = JUMP_KICK_DAMAGE
+	current_melee_range_mult = KICK_RANGE_MULT
+	velocity.y += 200.0
+	_register_combo_alt("kick")
+	current_melee_damage = int(round(float(current_melee_damage) * char_atk_mult))
+	if combo_alt_count >= 3:
+		current_melee_damage = int(round(float(current_melee_damage) * COMBO_ALT_BONUS))
+	_temp_expr = "grin"
+	_expr_timer = 0.3
+	var leg: Node2D = leg_l
+	if leg and _melee_swing_tween and _melee_swing_tween.is_valid():
+		_melee_swing_tween.kill()
+	_melee_swing_tween = create_tween()
+	_anim_tweens.append(_melee_swing_tween)
+	_melee_swing_tween.tween_property(leg, "rotation", -1.2, 0.1)
+	_melee_swing_tween.tween_property(leg, "rotation", 0.0, 0.15)
+	melee_requested.emit(global_position, Vector2(facing, 0.0))
+
+
+# ---- V2.1 装备近战武器（日用品）----
+func equip_melee_weapon(weapon_name: String) -> void:
+	if not Weapons.MELEE_WEAPONS.has(weapon_name):
+		return
+	if equipped_melee_weapon != "":
+		_break_melee_weapon()
+	equipped_melee_weapon = weapon_name
+	melee_weapon_durability = int(Weapons.MELEE_WEAPONS[weapon_name].get("durability", 10))
+	_temp_expr = "grin"
+	_expr_timer = 0.4
+
+
+# ---- V2.1 武器脱手（耐久归零或更换）----
+func _break_melee_weapon() -> void:
+	if equipped_melee_weapon == "":
+		return
+	var fly := ColorRect.new()
+	fly.color = Color(0.6, 0.6, 0.6, 1.0)
+	fly.size = Vector2(12, 4)
+	fly.position = Vector2(10.0 * facing, -20.0)
+	add_child(fly)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(fly, "position", Vector2(10.0 * facing, -20.0) + Vector2(facing * 120.0, -30.0), 0.35).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(fly, "modulate:a", 0.0, 0.35)
+	tw.chain().tween_callback(func() -> void:
+		if is_instance_valid(fly):
+			fly.queue_free())
+	equipped_melee_weapon = ""
+	melee_weapon_durability = 0
+	current_melee_range_mult = 1.0
 
 
 func _play_melee_anim(side: int, lunge: bool) -> void:
@@ -576,7 +776,9 @@ func get_buff_multiplier(stat: String) -> float:
 		"attack":
 			return 1.5 if has_buff("chili_rice") else 1.0
 		"melee_range":
-			return 1.5 if has_buff("iron_pipe") else 1.0
+			# V1.0: iron_pipe buff 提供 ×1.5；V2.1: 叠加武器/踢击范围与角色近战范围
+			var m := 1.5 if has_buff("iron_pipe") else 1.0
+			return m * current_melee_range_mult * char_melee_range_mult
 		"defense":
 			return 0.5 if has_buff("armor_vest") else 1.0
 	return 1.0
@@ -622,6 +824,12 @@ func take_damage(dmg: int) -> void:
 	if invincible or dead:
 		return
 	var real := int(round(float(dmg) * get_buff_multiplier("defense")))
+	# ---- V2.1 垃圾桶盖格挡：受击伤害 ×0.5，每次格挡耗 2 点耐久 ----
+	if equipped_melee_weapon == "trash_lid" and melee_weapon_durability > 0:
+		real = int(round(float(real) * 0.5))
+		melee_weapon_durability -= 2
+		if melee_weapon_durability <= 0:
+			_break_melee_weapon()
 	real = maxi(real, 0)
 	hp = maxi(hp - real, 0)
 	hp_changed.emit(hp, MAX_HP)
@@ -773,6 +981,21 @@ func reset() -> void:
 	charge_time = 0.0
 	active_buffs = {}
 	_buff_ui_timer = 0.0
+	# ---- V2.1 拳脚/冲刺/近战武器状态复位 ----
+	kick_count = 0
+	kick_cooldown = 0.0
+	combo_last_type = ""
+	combo_alt_count = 0
+	dash_active = false
+	dash_timer = 0.0
+	jump_kick_hardstun = 0.0
+	_dash_clock = 0.0
+	_dash_press_dir = 0.0
+	_dash_press_time = -999.0
+	_prev_axis = 0.0
+	equipped_melee_weapon = ""
+	melee_weapon_durability = 0
+	current_melee_range_mult = 1.0
 	# ---- V1.1 援护列表清空 ----
 	assist_units = []
 	# ---- V1.1 载具状态复位 ----
@@ -845,6 +1068,20 @@ func _bot_find_nearest_zombie() -> Node2D:
 			if sq < best_sq:
 				best_sq = sq
 				best = z
+	return best
+
+
+# ---- V2.1 bot：查找附近的近战武器拾取物（铁管/轮胎/垃圾桶盖）----
+func _bot_find_nearby_weapon_pickup() -> Node2D:
+	var best: Node2D = null
+	var best_d: float = 120.0
+	for n in get_tree().root.find_children("*", "ItemPickup", true, false):
+		if n is ItemPickup and not n.is_queued_for_deletion():
+			if Weapons.MELEE_WEAPONS.has(n.item_type):
+				var d: float = global_position.distance_to(n.global_position)
+				if d < best_d:
+					best_d = d
+					best = n
 	return best
 
 
@@ -949,8 +1186,17 @@ func _bot_process(delta: float) -> void:
 	var move_dir: float = 0.0
 	var do_shoot := false
 	var do_melee := false
-
+	var do_kick := false  # V2.1 bot 踢击触发
 	var target_valid := is_instance_valid(bot_target)
+
+	# ---- V2.1 bot 拾取附近近战武器：无武器时移动到附近武器拾取物 ----
+	if equipped_melee_weapon == "" and bot_state == "follow":
+		var wp := _bot_find_nearby_weapon_pickup()
+		if wp != null:
+			var wdx: float = wp.global_position.x - global_position.x
+			if absf(wdx) > 20.0:
+				move_dir = signf(wdx)
+				facing = int(move_dir)
 
 	# ---- 追踪 P1 站定状态（1P 指令影响：站定时靠拢防守阵型）----
 	if target_valid:
@@ -1038,7 +1284,7 @@ func _bot_process(delta: float) -> void:
 				var dz2: float = zr2.global_position.x - global_position.x
 				facing = int(signf(dz2)) if dz2 != 0 else facing
 				var d2: float = global_position.distance_to(zr2.global_position)
-				if d2 < 350.0 and bot_attack_cooldown <= 0.0:
+				if d2 < 350.0 and d2 > 150.0 and has_gun_equipped() and bot_attack_cooldown <= 0.0:
 					do_shoot = true
 					bot_attack_cooldown = 0.3
 
@@ -1070,7 +1316,7 @@ func _bot_process(delta: float) -> void:
 				move_dir = 0.0
 			else:
 				move_dir = 0.0
-				if bot_attack_cooldown <= 0.0:
+				if fd > 150.0 and has_gun_equipped() and bot_attack_cooldown <= 0.0:
 					do_shoot = true
 					bot_attack_cooldown = 0.3
 
@@ -1090,7 +1336,12 @@ func _bot_process(delta: float) -> void:
 				if dist < 60.0:
 					do_melee = true
 					move_dir = 0.0
-				elif bot_attack_cooldown <= 0.0:
+				elif dist < 150.0:
+					# V2.1 中距离：用踢击代替射击
+					if bot_attack_cooldown <= 0.0:
+						do_kick = true
+						bot_attack_cooldown = 0.3
+				elif has_gun_equipped() and bot_attack_cooldown <= 0.0:
 					do_shoot = true
 					bot_attack_cooldown = 0.3
 			elif dist < 350.0:
@@ -1139,8 +1390,15 @@ func _bot_process(delta: float) -> void:
 	# ---- 执行攻击动作 ----
 	if do_melee:
 		_try_melee()
+	if do_kick:
+		_try_kick()
 	if do_shoot:
 		_try_shoot()
+	# ---- V2.1 bot 跳踢：空中且敌人在下方时触发 ----
+	if not is_on_floor() and bot_state == "attack":
+		var tgt := _bot_find_best_target()
+		if tgt != null and tgt.global_position.y > global_position.y:
+			_try_jump_kick()
 
 	# ---- 应用移动与动画（retreat 已提前 return）----
 	if bot_state != "retreat":

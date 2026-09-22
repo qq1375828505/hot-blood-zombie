@@ -39,6 +39,13 @@ func _run() -> void:
 	_test_weapons_external()
 	_test_dlc_registry()
 	_test_save_version()
+	_test_v21_kick_combo()
+	_test_v21_melee_weapon()
+	_test_v21_gun_downgrade()
+	_test_v21_delinquent_flee()
+	_test_v21_bosozoku_dash()
+	_test_v21_humanoid_begging()
+	_test_v21_infighting_enhanced()
 	print("== 全部通过 ==")
 	quit(0)
 
@@ -1138,3 +1145,201 @@ func _test_save_version() -> void:
 	assert(int(reset_data.get("version")) == 2, "reset_save 后存档 version=2")
 	ach.queue_free()
 	print("save version ok")
+
+
+# ======================================================================
+# V2.1 热血化：战斗模式 + 敌人人味化 测试
+# ======================================================================
+
+# ---- V2.1 踢击连招 ----
+func _test_v21_kick_combo() -> void:
+	var p := load("res://scenes/player.tscn").instantiate() as Player
+	root.add_child(p)
+	# 初始无枪 → shoot 键应触发踢击而非射击
+	assert(not p.has_gun_equipped(), "初始 pistol 不算已装备枪械")
+	# 踢击 2 段连击
+	p._try_kick()
+	assert(p.kick_count == 1, "踢击第 1 段")
+	assert(p.current_melee_damage == 3, "踢击第 1 段伤害 3")
+	p.kick_cooldown = 0.0
+	p._try_kick()
+	assert(p.kick_count == 2, "踢击第 2 段")
+	assert(p.current_melee_damage == 4, "踢击第 2 段伤害 4")
+	# 踢击范围倍率
+	assert(p.current_melee_range_mult == Player.KICK_RANGE_MULT, "踢击范围 ×1.2")
+	# 跳踢
+	p._try_jump_kick()
+	assert(p.current_melee_damage == Player.JUMP_KICK_DAMAGE, "跳踢伤害 6")
+	assert(p.velocity.y > 0.0, "跳踢带向下俯冲速度")
+	# 拳脚交替奖励：拳→踢→拳 = 第 3 击 ×1.5
+	p.combo_count = 0
+	p.kick_count = 0
+	p.combo_last_type = ""
+	p.combo_alt_count = 0
+	p.combo_timer = 0.5
+	p.charge_time = 0.1
+	p._resolve_melee()  # punch
+	assert(p.combo_alt_count == 1, "拳后交替计数 1")
+	p.kick_cooldown = 0.0
+	p._try_kick()  # kick
+	assert(p.combo_alt_count == 2, "踢后交替计数 2")
+	p.charge_time = 0.1
+	p._resolve_melee()  # punch → 第3击 ×1.5
+	assert(p.combo_alt_count >= 3, "第3次交替击触发奖励")
+	p.queue_free()
+	print("v21 kick combo ok")
+
+
+# ---- V2.1 近战武器（日用品）----
+func _test_v21_melee_weapon() -> void:
+	var p := load("res://scenes/player.tscn").instantiate() as Player
+	root.add_child(p)
+	# 装备铁管
+	p.equip_melee_weapon("iron_pipe")
+	assert(p.equipped_melee_weapon == "iron_pipe", "装备铁管")
+	assert(p.melee_weapon_durability == 15, "铁管耐久 15")
+	# 挥舞武器（charge_time=0 不蓄力）
+	p.charge_time = 0.1
+	p._resolve_melee()
+	assert(p.current_melee_damage == 6, "铁管挥舞伤害 6")
+	assert(p.melee_weapon_durability == 14, "命中后耐久 -1")
+	assert(p.current_melee_range_mult == 1.5, "铁管范围 ×1.5")
+	# 装备垃圾桶盖 → 格挡
+	p.equip_melee_weapon("trash_lid")
+	assert(p.equipped_melee_weapon == "trash_lid", "装备垃圾桶盖")
+	assert(p.melee_weapon_durability == 25, "垃圾桶盖耐久 25")
+	p.invincible = false
+	var hp_before := p.hp
+	p.take_damage(20)  # 格挡 ×0.5 = 10
+	assert(p.hp == hp_before - 10, "垃圾桶盖格挡减伤 50%")
+	assert(p.melee_weapon_durability == 23, "格挡耗 2 耐久")
+	# 耐久归零 → 脱手
+	p.melee_weapon_durability = 1
+	p.invincible = false
+	p.take_damage(100)
+	assert(p.equipped_melee_weapon == "", "耐久归零武器脱手")
+	# 重置清空
+	p.reset()
+	assert(p.equipped_melee_weapon == "", "reset 后近战武器清空")
+	p.queue_free()
+	print("v21 melee weapon ok")
+
+
+# ---- V2.1 枪械降级 ----
+func _test_v21_gun_downgrade() -> void:
+	var p := load("res://scenes/player.tscn").instantiate() as Player
+	root.add_child(p)
+	# pistol 是默认副武器，has_gun_equipped 应为 false
+	assert(not p.has_gun_equipped(), "pistol 不算已装备枪械")
+	# machine_gun 有弹药 → has_gun_equipped true
+	p.weapon_ammo["machine_gun"] = 120
+	p.switch_weapon("machine_gun")
+	assert(p.has_gun_equipped(), "机枪有弹药算已装备枪械")
+	# 打空弹药 → has_gun_equipped false（shoot 变回踢）
+	p.weapon_ammo["machine_gun"] = 1
+	p.shoot_cooldown = 0.0
+	p._try_shoot()
+	assert(p.current_weapon == "pistol", "机枪打空自动切回 pistol")
+	assert(not p.has_gun_equipped(), "切回 pistol 后 has_gun_equipped=false")
+	# MELEE_WEAPONS 表存在
+	assert(Weapons.MELEE_WEAPONS.has("iron_pipe"), "MELEE_WEAPONS 含 iron_pipe")
+	assert(Weapons.MELEE_WEAPONS["iron_pipe"]["damage"] == 6, "铁管伤害 6")
+	assert(Weapons.MELEE_WEAPONS["trash_lid"]["can_block"] == true, "垃圾桶盖可格挡")
+	p.queue_free()
+	print("v21 gun downgrade ok")
+
+
+# ---- V2.1 人形敌：逃跑 ----
+func _test_v21_delinquent_flee() -> void:
+	var z := load("res://scenes/zombie.tscn").instantiate() as Zombie
+	root.add_child(z)
+	z.setup(Zombie.Type.DELINQUENT, null)
+	assert(z.humanoid == true, "不良少年是 humanoid")
+	assert(z.can_flee == true, "不良少年 can_flee=true")
+	assert(z.hp == 5 and z.max_hp == 5, "不良少年 hp=5")
+	assert(is_equal_approx(z.speed, 90.0), "不良少年 speed=90")
+	# 残血到逃跑线以下，直接置位逃跑状态并校验状态变量
+	z.hp = 1  # <= max_hp*0.3
+	z.fleeing = true
+	z._flee_timer = 2.0
+	assert(z.fleeing == true, "置位逃跑状态成功")
+	z.fleeing = false
+	z.queue_free()
+	# BOSOZOKU 不会逃跑
+	var zb := load("res://scenes/zombie.tscn").instantiate() as Zombie
+	root.add_child(zb)
+	zb.setup(Zombie.Type.BOSOZOKU, null)
+	assert(zb.can_flee == false, "暴走族 can_flee=false")
+	zb.queue_free()
+	print("v21 delinquent flee ok")
+
+
+# ---- V2.1 人形敌：BOSOZOKU 冲刺 ----
+func _test_v21_bosozoku_dash() -> void:
+	var z := load("res://scenes/zombie.tscn").instantiate() as Zombie
+	root.add_child(z)
+	z.setup(Zombie.Type.BOSOZOKU, null)
+	assert(z.hp == 8, "暴走族 hp=8")
+	assert(is_equal_approx(z.speed, 130.0), "暴走族 speed=130")
+	# 冲刺状态机变量/常量就位
+	assert(z._boso_dash_state == "none", "冲刺初始状态 none")
+	assert(is_equal_approx(z.BOSO_DASH_COOLDOWN, 5.0), "冲刺冷却 5s")
+	assert(is_equal_approx(z.BOSO_DASH_SPEED_MULT, 2.8), "冲刺速度倍率 2.8")
+	assert(is_equal_approx(z.BOSO_DASH_DAMAGE, 25.0), "冲刺接触伤害 25")
+	# 进入前摇后，状态推进到 telegraph
+	z._boso_dash_state = "telegraph"
+	z._boso_dash_timer = 0.5
+	assert(z._boso_dash_state == "telegraph", "冲刺前摇可置位")
+	z.queue_free()
+	print("v21 bosozoku dash ok")
+
+
+# ---- V2.1 人形敌：求饶阈值 + 收服援护 ----
+func _test_v21_humanoid_begging() -> void:
+	# DELINQUENT 求饶阈值 hp<=3
+	var z := load("res://scenes/zombie.tscn").instantiate() as Zombie
+	root.add_child(z)
+	z.setup(Zombie.Type.DELINQUENT, null)
+	z.take_damage(2, true)  # 5->3，近战，应触发求饶
+	assert(z.begging == true, "不良少年近战打至 hp<=3 触发求饶")
+	var data := z.capture()
+	assert(data.get("damage") == 12, "不良少年收服援护伤害 12")
+	assert(data.get("humanoid") == true, "援护数据含 humanoid=true")
+	assert(data.get("personality") == "懦弱小弟", "援护性格=懦弱小弟")
+	if not z.is_queued_for_deletion():
+		z.queue_free()
+	# BOSOZOKU 求饶阈值 hp<=4
+	var zb := load("res://scenes/zombie.tscn").instantiate() as Zombie
+	root.add_child(zb)
+	zb.setup(Zombie.Type.BOSOZOKU, null)
+	zb.take_damage(4, true)  # 8->4，近战，应触发求饶
+	assert(zb.begging == true, "暴走族近战打至 hp<=4 触发求饶")
+	var bd := zb.capture()
+	assert(bd.get("damage") == 20, "暴走族收服援护伤害 20")
+	assert(bd.get("personality") == "暴躁大哥", "援护性格=暴躁大哥")
+	if not zb.is_queued_for_deletion():
+		zb.queue_free()
+	print("v21 humanoid begging ok")
+
+
+# ---- V2.1 人形敌：内讧增强 / 生气 ----
+func _test_v21_infighting_enhanced() -> void:
+	var a := load("res://scenes/zombie.tscn").instantiate() as Zombie
+	root.add_child(a)
+	a.setup(Zombie.Type.DELINQUENT, null)
+	# 人形敌 silly 倍率 / 生气变量存在
+	assert(a.has_method("_try_brawl"), "_try_brawl 存在")
+	assert(a._angry == false, "初始不生气")
+	# 手动触发生气态，校验速度倍率生效
+	a._angry = true
+	a._anger_timer = 3.0
+	assert(a._angry == true, "生气可置位")
+	assert(is_equal_approx(a.ANGER_SPEED_MULT, 1.2), "生气速度倍率 1.2")
+	a.queue_free()
+	# 普通 WALKER 不受人形敌增强影响（humanoid=false）
+	var w := load("res://scenes/zombie.tscn").instantiate() as Zombie
+	root.add_child(w)
+	w.setup(Zombie.Type.WALKER, null)
+	assert(w.humanoid == false, "普通 walker humanoid=false")
+	w.queue_free()
+	print("v21 infighting enhanced ok")

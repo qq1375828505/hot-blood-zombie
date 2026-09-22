@@ -51,6 +51,46 @@ const NORMAL_ZOMBIES := {
 	},
 }
 
+# ---- V2.1 人形敌定义（人味化：求饶/逃跑/内讧/发呆 + 打残收服援护）----
+# 说明：独立字典存放，避免改动既有 NORMAL_ZOMBIES.size()==3 的兼容性断言；
+#       通过 get_normal_def() 合并查询，zombie.gd 按 _type_name 读取。
+const HUMANOID_ZOMBIES := {
+	"delinquent": {
+		"ability": 1.0,
+		"hp": 5,
+		"damage": 12,
+		"speed": 90.0,
+		"lifesteal_rate": 0.05,
+		"dodge_chance": 0.35,
+		"dodge_cooldown": 1.5,
+		"super_armor": false,
+		"stun_resist": 0.1,
+		"burst_ability": 2.0,
+		"hit_streak_threshold": 3,
+		"humanoid": true,
+		"can_flee": true,
+		"flee_hp_ratio": 0.3,
+	},
+	"bosozoku": {
+		"ability": 1.8,
+		"hp": 8,
+		"damage": 18,
+		"speed": 130.0,
+		"lifesteal_rate": 0.05,
+		"dodge_chance": 0.30,
+		"dodge_cooldown": 1.8,
+		"super_armor": false,
+		"stun_resist": 0.2,
+		"burst_ability": 2.8,
+		"hit_streak_threshold": 4,
+		"humanoid": true,
+		"can_flee": false,
+		"dash_speed": 380.0,
+		"dash_range": 140.0,
+		"dash_cooldown": 5.0,
+	},
+}
+
 # ---- 精英怪定义（ability 4~5，至少2种）----
 const ELITES := {
 	"bosozoku_leader": {
@@ -225,6 +265,9 @@ const BURST_STATES := {
 static func get_normal_def(ztype_name: String) -> Dictionary:
 	if NORMAL_ZOMBIES.has(ztype_name):
 		return NORMAL_ZOMBIES[ztype_name]
+	# V2.1：人形敌定义合并查询（delinquent / bosozoku）
+	if HUMANOID_ZOMBIES.has(ztype_name):
+		return HUMANOID_ZOMBIES[ztype_name]
 	return {}
 
 static func get_elite_def(elite_id: String) -> Dictionary:
