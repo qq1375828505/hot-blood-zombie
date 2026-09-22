@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/level.gd" id="1_level"]
 [ext_resource type="Script" path="res://scripts/destructible.gd" id="2_destr"]
@@ -16,6 +16,9 @@ size = Vector2(26, 24)
 
 [sub_resource type="RectangleShape2D" id="shape_barrel"]
 size = Vector2(24, 32)
+
+[sub_resource type="RectangleShape2D" id="shape_vending"]
+size = Vector2(24, 50)
 
 [sub_resource type="RectangleShape2D" id="shape_pickup"]
 size = Vector2(28, 18)
@@ -339,6 +342,48 @@ collision_mask = 1
 [node name="Shape" type="CollisionShape2D" parent="Props/Destructibles/IronBarrel/HitArea"]
 shape = SubResource("shape_barrel")
 
+[node name="VendingMach1" type="StaticBody2D" parent="Props/Destructibles"]
+position = Vector2(420, 455)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("2_destr")
+destructible_type = "vending_machine"
+
+[node name="Body" type="ColorRect" parent="Props/Destructibles/VendingMach1"]
+offset_left = -12.0
+offset_top = -25.0
+offset_right = 12.0
+offset_bottom = 25.0
+color = Color(0.75, 0.15, 0.15, 1)
+
+[node name="HitArea" type="Area2D" parent="Props/Destructibles/VendingMach1"]
+collision_layer = 0
+collision_mask = 1
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Destructibles/VendingMach1/HitArea"]
+shape = SubResource("shape_vending")
+
+[node name="VendingMach2" type="StaticBody2D" parent="Props/Destructibles"]
+position = Vector2(920, 455)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("2_destr")
+destructible_type = "vending_machine"
+
+[node name="Body" type="ColorRect" parent="Props/Destructibles/VendingMach2"]
+offset_left = -12.0
+offset_top = -25.0
+offset_right = 12.0
+offset_bottom = 25.0
+color = Color(0.75, 0.15, 0.15, 1)
+
+[node name="HitArea" type="Area2D" parent="Props/Destructibles/VendingMach2"]
+collision_layer = 0
+collision_mask = 1
+
+[node name="Shape" type="CollisionShape2D" parent="Props/Destructibles/VendingMach2/HitArea"]
+shape = SubResource("shape_vending")
+
 [node name="Pickups" type="Node2D" parent="Props"]
 
 [node name="WeaponMG" type="Area2D" parent="Props/Pickups"]
@@ -463,6 +508,58 @@ offset_top = 580.0
 offset_right = 1185.0
 offset_bottom = 620.0
 color = Color(0.28, 0.32, 0.35, 1)
+
+[node name="Decor" type="Node2D" parent="." groups=["decor"]]
+z_index = -5
+
+[node name="NeonRamen" type="ColorRect" parent="Decor" groups=["neon"]]
+offset_left = 200.0
+offset_top = 280.0
+offset_right = 240.0
+offset_bottom = 292.0
+color = Color(1.0, 0.30, 0.30, 1)
+
+[node name="NeonCafe" type="ColorRect" parent="Decor" groups=["neon"]]
+offset_left = 650.0
+offset_top = 250.0
+offset_right = 695.0
+offset_bottom = 262.0
+color = Color(0.30, 0.60, 1.0, 1)
+
+[node name="NeonGame" type="ColorRect" parent="Decor" groups=["neon"]]
+offset_left = 1050.0
+offset_top = 290.0
+offset_right = 1090.0
+offset_bottom = 302.0
+color = Color(1.0, 0.40, 0.80, 1)
+
+[node name="Shutter1" type="ColorRect" parent="Decor"]
+offset_left = 300.0
+offset_top = 380.0
+offset_right = 360.0
+offset_bottom = 478.0
+color = Color(0.18, 0.17, 0.19, 1)
+
+[node name="Shutter1Slat" type="ColorRect" parent="Decor"]
+offset_left = 305.0
+offset_top = 410.0
+offset_right = 355.0
+offset_bottom = 414.0
+color = Color(0.25, 0.24, 0.26, 1)
+
+[node name="Shutter2" type="ColorRect" parent="Decor"]
+offset_left = 780.0
+offset_top = 380.0
+offset_right = 840.0
+offset_bottom = 478.0
+color = Color(0.18, 0.17, 0.19, 1)
+
+[node name="Shutter2Slat" type="ColorRect" parent="Decor"]
+offset_left = 785.0
+offset_top = 410.0
+offset_right = 835.0
+offset_bottom = 414.0
+color = Color(0.25, 0.24, 0.26, 1)
 
 [node name="Boundaries" type="Node2D" parent="."]
 

@@ -431,6 +431,79 @@ offset_right = 1255.0
 offset_bottom = 484.0
 color = Color(0.16, 0.16, 0.18, 1)
 
+[node name="Decor" type="Node2D" parent="." groups=["decor"]]
+z_index = -5
+
+[node name="FenceBarH1" type="ColorRect" parent="Decor"]
+offset_left = 80.0
+offset_top = 370.0
+offset_right = 1200.0
+offset_bottom = 373.0
+color = Color(0.35, 0.35, 0.38, 1)
+
+[node name="FenceBarH2" type="ColorRect" parent="Decor"]
+offset_left = 80.0
+offset_top = 410.0
+offset_right = 1200.0
+offset_bottom = 413.0
+color = Color(0.35, 0.35, 0.38, 1)
+
+[node name="FenceV1" type="ColorRect" parent="Decor"]
+offset_left = 200.0
+offset_top = 360.0
+offset_right = 202.0
+offset_bottom = 478.0
+color = Color(0.30, 0.30, 0.33, 1)
+
+[node name="FenceV2" type="ColorRect" parent="Decor"]
+offset_left = 600.0
+offset_top = 360.0
+offset_right = 602.0
+offset_bottom = 478.0
+color = Color(0.30, 0.30, 0.33, 1)
+
+[node name="FenceV3" type="ColorRect" parent="Decor"]
+offset_left = 1000.0
+offset_top = 360.0
+offset_right = 1002.0
+offset_bottom = 478.0
+color = Color(0.30, 0.30, 0.33, 1)
+
+[node name="HoopBackboard" type="ColorRect" parent="Decor"]
+offset_left = 440.0
+offset_top = 300.0
+offset_right = 465.0
+offset_bottom = 320.0
+color = Color(0.90, 0.92, 0.95, 1)
+
+[node name="HoopRim" type="ColorRect" parent="Decor"]
+offset_left = 448.0
+offset_top = 322.0
+offset_right = 460.0
+offset_bottom = 326.0
+color = Color(0.95, 0.50, 0.15, 1)
+
+[node name="HoopSupport" type="ColorRect" parent="Decor"]
+offset_left = 451.0
+offset_top = 326.0
+offset_right = 454.0
+offset_bottom = 478.0
+color = Color(0.40, 0.40, 0.42, 1)
+
+[node name="FloorLine1" type="ColorRect" parent="Decor"]
+offset_left = 0.0
+offset_top = 483.0
+offset_right = 1280.0
+offset_bottom = 484.0
+color = Color(0.40, 0.40, 0.43, 0.4)
+
+[node name="FloorLine2" type="ColorRect" parent="Decor"]
+offset_left = 0.0
+offset_top = 488.0
+offset_right = 1280.0
+offset_bottom = 489.0
+color = Color(0.40, 0.40, 0.43, 0.3)
+
 [node name="Boundaries" type="Node2D" parent="."]
 
 [node name="WallLeft" type="StaticBody2D" parent="Boundaries"]

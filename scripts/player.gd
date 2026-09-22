@@ -16,6 +16,8 @@ signal grenade_changed(count: int)
 signal buffs_changed(active: Array)
 # ---- V1.1 半尸化变身系统 ----
 signal half_zombie_changed(active: bool, player_index: int)
+# ---- V2.2 根性起身：每局限一次的站起信号 ----
+signal stood_up(player_index: int)
 
 const GRAVITY := 980.0
 const SPEED := 260.0
@@ -55,6 +57,22 @@ const BLOOD_SPRAY_INTERVAL := 0.1  # 喷射间隔（高速持续喷射）
 const BLOOD_SPRAY_DAMAGE := 5  # 每次喷射伤害
 const BLOOD_SPRAY_RANGE := 130.0  # 喷射范围（像素）
 const HALF_ZOMBIE_SPEED_MULT := 0.6  # 半尸化移速倍率
+
+# ---- V2.2 根性気力站起（致敬热血物语気力≥32 自动站起）----
+const STAND_UP_ENERGY_COST := 32.0   # 根性阈值：消耗 32 热血魂站起
+const STAND_UP_HP_RATIO := 0.3        # 恢复 30% 最大 HP
+const STAND_UP_DURATION := 1.5        # 起身硬直时间
+var can_stand_up: bool = true         # 每局限一次
+var standing_up: bool = false        # 当前正在起身硬直中
+var _stand_up_timer: float = 0.0
+var _stand_up_hastened: bool = false # 本次起身是否已被队友救援加速
+
+# ---- V2.2 兄弟连携 / 挡枪 ----
+const COMBO_ATTACK_RANGE := 60.0      # P1/P2 合体技距离阈值
+const COMBO_ATTACK_COOLDOWN := 5.0
+const COMBO_ATTACK_DAMAGE_MULT := 2.0
+const BLOCK_COOLDOWN := 2.0           # P2 挡枪冷却
+var _block_cooldown: float = 0.0
 
 # ---- V1.2 角色选择系统：属性倍率（由 CharacterData 注入）----
 var character_id: String = "pompadour"
@@ -246,6 +264,7 @@ func _physics_process(delta: float) -> void:
 	blood_spray_cooldown = maxf(blood_spray_cooldown - delta, 0.0)
 	kick_cooldown = maxf(kick_cooldown - delta, 0.0)
 	jump_kick_hardstun = maxf(jump_kick_hardstun - delta, 0.0)
+	_block_cooldown = maxf(_block_cooldown - delta, 0.0)
 	_dash_clock += delta
 	if combo_timer > 0.0:
 		combo_timer = maxf(combo_timer - delta, 0.0)
@@ -263,6 +282,23 @@ func _physics_process(delta: float) -> void:
 		_set_anim("death")
 		_update_anim(delta)
 		_update_expression(delta)
+		return
+
+	# ---- V2.2 根性起身硬直：不可移动/攻击/跳跃，速度衰减到 0，身体微微发抖 ----
+	if standing_up:
+		_stand_up_timer = maxf(_stand_up_timer - delta, 0.0)
+		velocity.x = move_toward(velocity.x, 0.0, 1500.0 * delta)
+		if not is_on_floor():
+			velocity.y += GRAVITY * delta
+		move_and_slide()
+		visual.scale.x = facing
+		_set_anim("idle")
+		_update_anim(delta)
+		_update_expression(delta)
+		visual.position.x += randf_range(-1.0, 1.0)
+		visual.position.y += randf_range(-1.0, 1.0)
+		if _stand_up_timer <= 0.0:
+			standing_up = false
 		return
 
 	# ---- V1.1 载具内状态：玩家隐藏，由载具接管输入 ----
@@ -386,11 +422,125 @@ func _physics_process(delta: float) -> void:
 		charge_time = 0.0
 
 	if _is_special_pressed() and energy >= MAX_ENERGY:
+		# ---- V2.2：已习得专属必杀 → 释放个人武技；否则保持通用援护召唤 ----
+		if _try_release_personal_special():
+			return
 		energy = 0.0
 		energy_changed.emit(energy, MAX_ENERGY)
 		_temp_expr = "grin"
 		_expr_timer = 0.5
 		special_used.emit()
+
+
+# ---- V2.2 个人武技释放：按当前角色 special_skill 分发不同效果 ----
+# 已习得则释放并返回 true；未习得返回 false（调用方回退到通用援护召唤）
+func _try_release_personal_special() -> bool:
+	var cd := get_node_or_null("/root/CharacterData")
+	var ec := get_node_or_null("/root/Economy")
+	var skill_id := ""
+	var base_dmg := 0
+	if cd != null:
+		var data: Dictionary = cd.get_character(character_id)
+		skill_id = str(data.get("special_skill", ""))
+		base_dmg = int(data.get("special_damage", 10))
+	if skill_id == "":
+		return false
+	var has_it := false
+	if ec != null and ec.has_method("has_special_unlocked"):
+		has_it = ec.has_special_unlocked(character_id)
+	if not has_it:
+		return false
+	# 技能书「必杀强化」倍率
+	var dmg_mult := 1.0
+	if ec != null and "special_damage_mult" in ec:
+		dmg_mult = float(ec.special_damage_mult)
+	energy = 0.0
+	energy_changed.emit(energy, MAX_ENERGY)
+	set_expression("grin")
+	_expr_timer = 0.6
+	# 临时无敌帧 0.3s + 屏幕微震
+	invincible = true
+	var off := create_tween()
+	_anim_tweens.append(off)
+	off.tween_interval(0.3)
+	off.tween_callback(func() -> void:
+		invincible = false
+	)
+	_screen_shake(0.25, 3.0)
+	var dmg := int(round(float(base_dmg) * dmg_mult))
+	match skill_id:
+		"mach_kick", "mach_punch":
+			# 前方 120px 扇形
+			_hit_front_fan(120.0, deg_to_rad(35.0), dmg)
+			velocity.x += facing * 220.0
+		"earthquake":
+			# 全屏 AOE ×0.8
+			for z in get_tree().get_nodes_in_group("zombies"):
+				_damage_zombie(z, int(round(float(dmg) * 0.8)))
+		"tornado_kick":
+			# 周围 100px 360°
+			_hit_radius(100.0, dmg)
+			var sp := create_tween()
+			_anim_tweens.append(sp)
+			sp.set_parallel(true)
+			sp.tween_property(visual, "rotation", visual.rotation + TAU * 2.0, 0.5)
+		"human_torpedo":
+			# 向前冲刺 200px 撞敌，8 伤害后弹回 + 搞笑旋转
+			velocity.x = facing * 520.0
+			var tgt_x: float = global_position.x + facing * 200.0
+			var dash := create_tween()
+			_anim_tweens.append(dash)
+			dash.tween_property(self, "global_position:x", tgt_x, 0.25).set_trans(Tween.TRANS_LINEAR)
+			dash.tween_callback(func() -> void:
+				velocity.x = -facing * 300.0
+				var spin := create_tween()
+				_anim_tweens.append(spin)
+				spin.tween_property(visual, "rotation", visual.rotation + TAU * 3.0, 0.5)
+			)
+			_hit_radius(70.0, 8)
+	return true
+
+
+# ---- V2.2 必杀伤害工具：对单个 zombies 组成员安全扣血 ----
+func _damage_zombie(z: Node, dmg: int) -> void:
+	if z == null or z.is_queued_for_deletion():
+		return
+	if z.has_method("take_damage"):
+		z.take_damage(dmg)
+
+
+# 前方扇形（按 facing）内 zombies 组敌人造成 dmg
+func _hit_front_fan(range_px: float, half_angle: float, dmg: int) -> void:
+	var face_vec := Vector2(facing, 0.0)
+	for z in get_tree().get_nodes_in_group("zombies"):
+		if z == null or z.is_queued_for_deletion():
+			continue
+		var to_z: Vector2 = z.global_position - global_position
+		if to_z.length() > range_px:
+			continue
+		if to_z.length_squared() > 0.01 and to_z.normalized().dot(face_vec) < cos(half_angle):
+			continue
+		_damage_zombie(z, dmg)
+
+
+# 圆形范围（360°）内 zombies 组敌人造成 dmg
+func _hit_radius(radius: float, dmg: int) -> void:
+	for z in get_tree().get_nodes_in_group("zombies"):
+		if z == null or z.is_queued_for_deletion():
+			continue
+		if global_position.distance_to(z.global_position) <= radius:
+			_damage_zombie(z, dmg)
+
+
+# 屏幕/身体微震（本地 visual 抖动，不改场景相机引用）
+func _screen_shake(duration: float, amplitude: float) -> void:
+	var base := visual.position
+	var tw := create_tween()
+	_anim_tweens.append(tw)
+	var steps := 8
+	for i in steps:
+		tw.tween_property(visual, "position", base + Vector2(randf_range(-amplitude, amplitude), randf_range(-amplitude, amplitude)), duration / steps)
+	tw.tween_property(visual, "position", base, duration / steps)
 
 
 func _set_anim(n: String) -> void:
@@ -823,6 +973,10 @@ func take_damage(dmg: int) -> void:
 		return
 	if invincible or dead:
 		return
+	# ---- V2.2 兄弟连携·挡枪：P2(bot) 在 P1 与敌人之间时替 P1 扛伤害 ----
+	if player_index == 1 and not is_bot and _block_cooldown <= 0.0:
+		if _try_p2_block(dmg):
+			return
 	var real := int(round(float(dmg) * get_buff_multiplier("defense")))
 	# ---- V2.1 垃圾桶盖格挡：受击伤害 ×0.5，每次格挡耗 2 点耐久 ----
 	if equipped_melee_weapon == "trash_lid" and melee_weapon_durability > 0:
@@ -831,8 +985,13 @@ func take_damage(dmg: int) -> void:
 		if melee_weapon_durability <= 0:
 			_break_melee_weapon()
 	real = maxi(real, 0)
+	# ---- V2.2 根性起身：本次伤害会致死时，消耗热血魂原地站起 ----
+	var actual_max := int(100 * char_hp_mult)
+	if (hp - real) <= 0 and can_stand_up and energy >= STAND_UP_ENERGY_COST and energy < MAX_ENERGY:
+		_do_stand_up()
+		return
 	hp = maxi(hp - real, 0)
-	hp_changed.emit(hp, MAX_HP)
+	hp_changed.emit(hp, actual_max)
 	invincible = true
 	visual.modulate = Color(1.0, 0.45, 0.45, 1.0)
 	_hurt_time = HURT_DURATION
@@ -854,6 +1013,104 @@ func take_damage(dmg: int) -> void:
 	if hp <= 0:
 		dead = true
 		died.emit()
+
+
+# ---- V2.2 挡枪：P2(bot) 位于 P1 与最近敌人之间且距 P1 < 50px 时，替 P1 扛伤 ----
+# 返回 true 表示已挡下（P1 本次不掉血）
+func _try_p2_block(dmg: int) -> bool:
+	var teammate: Player = null
+	for p in get_tree().get_nodes_in_group("players"):
+		if p is Player and p != self and not p.dead and not p.is_queued_for_deletion():
+			teammate = p
+			break
+	if teammate == null:
+		return false
+	# 距 P1 必须足够近（< 50px）
+	if global_position.distance_to(teammate.global_position) >= 50.0:
+		return false
+	# 找最近的存活敌人
+	var nearest: Node2D = null
+	var best_d: float = INF
+	for z in get_tree().get_nodes_in_group("zombies"):
+		if z == null or z.is_queued_for_deletion():
+			continue
+		var is_dying: bool = false
+		if "dying" in z:
+			is_dying = bool(z.get("dying"))
+		if is_dying:
+			continue
+		var d: float = global_position.distance_to(z.global_position)
+		if d < best_d:
+			best_d = d
+			nearest = z
+	if nearest == null:
+		return false
+	# P2.x 必须在 P1.x 与敌人 x 之间
+	var p1x: float = global_position.x
+	var tx: float = teammate.global_position.x
+	var ex: float = nearest.global_position.x
+	if absf(tx - p1x) < 0.01:
+		return false
+	var between := (tx > minf(p1x, ex) - 1.0) and (tx < maxf(p1x, ex) + 1.0)
+	if not between:
+		return false
+	# 挡枪成功：伤害转嫁给 P2，P2 表情 stare，30% 概率气泡，启动冷却
+	teammate.take_damage(dmg)
+	teammate.set_expression("stare")
+	_block_cooldown = BLOCK_COOLDOWN
+	if randf() < 0.3:
+		teammate._show_bubble("交给我！")
+	return true
+
+
+# ---- V2.2 根性起身演出：消耗热血魂，恢复 30% HP，进入起身硬直 ----
+func _do_stand_up() -> void:
+	energy -= STAND_UP_ENERGY_COST
+	energy_changed.emit(energy, MAX_ENERGY)
+	var actual_max := int(100 * char_hp_mult)
+	hp = int(actual_max * STAND_UP_HP_RATIO)
+	can_stand_up = false
+	standing_up = true
+	_stand_up_hastened = false
+	_stand_up_timer = STAND_UP_DURATION
+	hp_changed.emit(hp, actual_max)
+	# 演出：从倒地旋转恢复，身体微微发抖
+	for t in _anim_tweens:
+		if t.is_valid():
+			t.kill()
+	_anim_tweens.clear()
+	var t := create_tween()
+	_anim_tweens.append(t)
+	t.set_parallel(true)
+	t.tween_property(visual, "rotation", 0.0, 0.3).set_trans(Tween.TRANS_BACK)
+	t.tween_property(visual, "position:y", 0.0, 0.3)
+	set_expression("normal")
+	invincible = true
+	var wait := create_tween()
+	_anim_tweens.append(wait)
+	wait.tween_interval(0.6)
+	wait.tween_callback(func() -> void:
+		invincible = false
+	)
+	stood_up.emit(player_index)
+
+
+# ---- V2.2 漂浮气泡（挡枪"交给我！"/救援"振作点！"）----
+func _show_bubble(text: String) -> void:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.position = Vector2(-20.0, -60.0)
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.95, 0.4, 1.0))
+	add_child(lbl)
+	var tw := create_tween()
+	_anim_tweens.append(tw)
+	tw.set_parallel(true)
+	tw.tween_property(lbl, "position:y", -80.0, 0.8).set_trans(Tween.TRANS_LINEAR)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.8)
+	tw.chain().tween_callback(func() -> void:
+		if is_instance_valid(lbl):
+			lbl.queue_free())
 
 
 func add_energy(amount: float) -> void:
@@ -996,6 +1253,12 @@ func reset() -> void:
 	equipped_melee_weapon = ""
 	melee_weapon_durability = 0
 	current_melee_range_mult = 1.0
+	# ---- V2.2 根性起身 / 挡枪状态复位 ----
+	can_stand_up = true
+	standing_up = false
+	_stand_up_timer = 0.0
+	_stand_up_hastened = false
+	_block_cooldown = 0.0
 	# ---- V1.1 援护列表清空 ----
 	assist_units = []
 	# ---- V1.1 载具状态复位 ----
@@ -1248,6 +1511,9 @@ func _bot_process(delta: float) -> void:
 	if target_valid:
 		if bot_target.dead:
 			p1_need_rescue = true
+		elif bot_target.standing_up:
+			# ---- V2.2 救援增强：P1 根性起身硬直中，优先冲入救援 ----
+			p1_need_rescue = true
 		elif bot_target.hp < MAX_HP * 0.3:
 			# P1 血量危险，且附近有敌人
 			var p1_near_enemy := _bot_count_hostiles_near(bot_target.global_position, 100.0) > 0
@@ -1262,6 +1528,12 @@ func _bot_process(delta: float) -> void:
 		if hp > MAX_HP * 0.2:
 			# 自身血量>20%：冲入敌群近战挡枪式救援
 			bot_state = "rescue"
+			# V2.2：冲到 P1 身边（<30px）后将其起身硬直减半一次
+			if target_valid and bot_target.standing_up and not bot_target._stand_up_hastened \
+					and bot_target.global_position.distance_to(global_position) < 30.0:
+				bot_target._stand_up_timer *= 0.5
+				bot_target._stand_up_hastened = true
+				_show_bubble("振作点！")
 			var dx: float = bot_target.global_position.x - global_position.x
 			if absf(dx) > 24.0:
 				move_dir = signf(dx)

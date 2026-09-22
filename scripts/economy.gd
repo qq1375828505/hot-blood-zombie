@@ -23,6 +23,12 @@ const SHOP_ITEMS := {
 	"sports_drink": {"name": "运动饮料", "price": 35, "category": "food", "desc": "移速+30%，持续15s"},
 	"skill_combo_plus": {"name": "技能书：连击强化", "price": 200, "category": "skill", "desc": "连击伤害+20%（永久）"},
 	"skill_special_boost": {"name": "技能书：必杀强化", "price": 250, "category": "skill", "desc": "必杀伤害+30%（永久）"},
+	# ---- V2.2 角色专属必杀书（书店）：购买即解锁该角色个人武技 ----
+	"book_mach_kick": {"name": "马赫踢之书", "price": 3000, "category": "skill", "desc": "解锁飞机头专属必杀「马赫踢」", "skill_id": "mach_kick", "char_id": "pompadour"},
+	"book_mach_punch": {"name": "马赫拳之书", "price": 3000, "category": "skill", "desc": "解锁格斗专家专属必杀「马赫拳」", "skill_id": "mach_punch", "char_id": "fighter"},
+	"book_earthquake": {"name": "大地震击之书", "price": 4000, "category": "skill", "desc": "解锁铁壁壮汉专属必杀「大地震击」", "skill_id": "earthquake", "char_id": "tank"},
+	"book_tornado_kick": {"name": "旋风踢之书", "price": 3500, "category": "skill", "desc": "解锁疾风专属必杀「旋风踢」", "skill_id": "tornado_kick", "char_id": "sprinter"},
+	"book_human_torpedo": {"name": "人间鱼雷之书", "price": 8000, "category": "skill", "desc": "最贵却最弱？解锁暴走族专属必杀「人间鱼雷」", "skill_id": "human_torpedo", "char_id": "bosozoku"},
 }
 
 # ---- 永久技能书状态 ----
@@ -30,12 +36,65 @@ var purchased_skills: Dictionary = {}    # key=技能id, value=true（已购买�
 var combo_damage_mult: float = 1.0        # 连击伤害倍率（技能书提升，默认1.0）
 var special_damage_mult: float = 1.0      # 必杀伤害倍率（技能书提升，默认1.0）
 
+# ---- V2.2 角色专属必杀习得持久化（user://specials.json）----
+var unlocked_specials: Dictionary = {}     # key=skill_id（如 mach_kick）, value=true
+const SPECIALS_SAVE_PATH := "user://specials.json"
+
 # 商品分类顺序（左侧分类按钮自上而下）
 const CATEGORIES: Array = ["ammo", "gear", "food", "skill"]
 
 
 func _ready() -> void:
-	pass
+	_load_specials()
+
+
+# ---- V2.2 必杀习得查询/解锁接口 ----
+# 由 skill_id（角色的 special_skill 字段）查询是否已习得
+func is_special_learned(skill_id: String) -> bool:
+	return unlocked_specials.get(skill_id, false)
+
+
+# 由角色 id 查询其专属必杀是否已习得
+func has_special_unlocked(char_id: String) -> bool:
+	var cd := get_node_or_null("/root/CharacterData")
+	var skill_id := ""
+	if cd != null:
+		skill_id = str(cd.get_character(char_id).get("special_skill", ""))
+	if skill_id == "":
+		return false
+	return unlocked_specials.get(skill_id, false)
+
+
+# 解锁某个必杀技并持久化到 user://specials.json
+func unlock_special(skill_id: String) -> void:
+	if skill_id == "":
+		return
+	unlocked_specials[skill_id] = true
+	_save_specials()
+
+
+func _save_specials() -> void:
+	var data := {"version": 1, "unlocked": unlocked_specials}
+	var f := FileAccess.open(SPECIALS_SAVE_PATH, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify(data))
+	f.close()
+
+
+func _load_specials() -> void:
+	unlocked_specials.clear()
+	if not FileAccess.file_exists(SPECIALS_SAVE_PATH):
+		return
+	var f := FileAccess.open(SPECIALS_SAVE_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var parsed = JSON.parse_string(f.get_as_text())
+	f.close()
+	if parsed is Dictionary and parsed.has("unlocked"):
+		var ul: Dictionary = parsed["unlocked"]
+		for k in ul.keys():
+			unlocked_specials[str(k)] = true
 
 
 # ---- 金币增删 ----
@@ -109,6 +168,9 @@ func buy_item(item_id: String, player: Player) -> bool:
 					combo_damage_mult = 1.2
 				"skill_special_boost":
 					special_damage_mult = 1.3
+			# ---- V2.2 必杀书：解锁对应角色个人武技（持久化）----
+			if item.has("skill_id"):
+				unlock_special(str(item["skill_id"]))
 	return true
 
 

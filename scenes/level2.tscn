@@ -433,6 +433,107 @@ offset_right = 1250.0
 offset_bottom = 720.0
 color = Color(0.25, 0.20, 0.16, 1)
 
+[node name="Decor" type="Node2D" parent="." groups=["decor"]]
+z_index = -5
+
+[node name="Blackboard" type="ColorRect" parent="Decor"]
+offset_left = 480.0
+offset_top = 200.0
+offset_right = 680.0
+offset_bottom = 260.0
+color = Color(0.10, 0.30, 0.18, 1)
+
+[node name="Chalk1" type="ColorRect" parent="Decor"]
+offset_left = 500.0
+offset_top = 215.0
+offset_right = 560.0
+offset_bottom = 218.0
+color = Color(0.90, 0.90, 0.85, 0.8)
+
+[node name="Chalk2" type="ColorRect" parent="Decor"]
+offset_left = 510.0
+offset_top = 230.0
+offset_right = 545.0
+offset_bottom = 233.0
+color = Color(0.90, 0.90, 0.85, 0.6)
+
+[node name="Chalk3" type="ColorRect" parent="Decor"]
+offset_left = 590.0
+offset_top = 240.0
+offset_right = 650.0
+offset_bottom = 243.0
+color = Color(0.90, 0.90, 0.85, 0.7)
+
+[node name="DeskTop1" type="ColorRect" parent="Decor"]
+offset_left = 180.0
+offset_top = 445.0
+offset_right = 210.0
+offset_bottom = 449.0
+color = Color(0.65, 0.50, 0.30, 1)
+
+[node name="DeskLeg1L" type="ColorRect" parent="Decor"]
+offset_left = 184.0
+offset_top = 449.0
+offset_right = 186.0
+offset_bottom = 478.0
+color = Color(0.40, 0.30, 0.18, 1)
+
+[node name="DeskLeg1R" type="ColorRect" parent="Decor"]
+offset_left = 204.0
+offset_top = 449.0
+offset_right = 206.0
+offset_bottom = 478.0
+color = Color(0.40, 0.30, 0.18, 1)
+
+[node name="Chair1" type="ColorRect" parent="Decor"]
+offset_left = 215.0
+offset_top = 448.0
+offset_right = 228.0
+offset_bottom = 460.0
+color = Color(0.20, 0.18, 0.16, 1)
+
+[node name="DeskTop2" type="ColorRect" parent="Decor"]
+offset_left = 850.0
+offset_top = 445.0
+offset_right = 880.0
+offset_bottom = 449.0
+color = Color(0.65, 0.50, 0.30, 1)
+
+[node name="DeskLeg2L" type="ColorRect" parent="Decor"]
+offset_left = 854.0
+offset_top = 449.0
+offset_right = 856.0
+offset_bottom = 478.0
+color = Color(0.40, 0.30, 0.18, 1)
+
+[node name="DeskLeg2R" type="ColorRect" parent="Decor"]
+offset_left = 874.0
+offset_top = 449.0
+offset_right = 876.0
+offset_bottom = 478.0
+color = Color(0.40, 0.30, 0.18, 1)
+
+[node name="Chair2" type="ColorRect" parent="Decor"]
+offset_left = 885.0
+offset_top = 448.0
+offset_right = 898.0
+offset_bottom = 460.0
+color = Color(0.20, 0.18, 0.16, 1)
+
+[node name="CorridorWin1" type="ColorRect" parent="Decor"]
+offset_left = 420.0
+offset_top = 320.0
+offset_right = 445.0
+offset_bottom = 360.0
+color = Color(0.55, 0.75, 0.90, 0.5)
+
+[node name="CorridorWin2" type="ColorRect" parent="Decor"]
+offset_left = 950.0
+offset_top = 320.0
+offset_right = 975.0
+offset_bottom = 360.0
+color = Color(0.55, 0.75, 0.90, 0.5)
+
 [node name="Boundaries" type="Node2D" parent="."]
 
 [node name="WallLeft" type="StaticBody2D" parent="Boundaries"]

@@ -46,6 +46,12 @@ func _run() -> void:
 	_test_v21_bosozoku_dash()
 	_test_v21_humanoid_begging()
 	_test_v21_infighting_enhanced()
+	_test_v22_stand_up()
+	_test_v22_special_skills()
+	_test_v22_combo_attack()
+	_test_v22_shop_skill_books()
+	_test_v22_level_subtitles()
+	_test_v22_vending_machine()
 	print("== 全部通过 ==")
 	quit(0)
 
@@ -1343,3 +1349,195 @@ func _test_v21_infighting_enhanced() -> void:
 	assert(w.humanoid == false, "普通 walker humanoid=false")
 	w.queue_free()
 	print("v21 infighting enhanced ok")
+
+
+# ======================================================================
+# V2.2 兄弟连携 + 根性気力 + 必杀武技 + 场景日常化 测试
+# ======================================================================
+
+# ---- V2.2 根性気力站起 ----
+func _test_v22_stand_up() -> void:
+	var p := load("res://scenes/player.tscn").instantiate() as Player
+	root.add_child(p)
+	# 能量在 32~99 之间时，致命一击触发根性起身
+	p.add_energy(50.0)
+	p.invincible = false
+	p.take_damage(999)
+	assert(p.dead == false, "能量充足时根性起身不死亡")
+	assert(p.standing_up == true, "进入起身硬直状态")
+	assert(p.can_stand_up == false, "每局限一次：起身后置 false")
+	assert(p.hp == int(100 * Player.STAND_UP_HP_RATIO), "恢复 30% 最大 HP")
+	assert(is_equal_approx(p.energy, 50.0 - Player.STAND_UP_ENERGY_COST), "消耗 32 热血魂")
+	# 站起后再次致命 → 不再起身，正常死亡
+	p.standing_up = false
+	p.invincible = false
+	p.take_damage(999)
+	assert(p.dead == true, "根性用完后正常死亡")
+	# 无能量时直接死亡
+	p.reset()
+	p.energy = 0.0
+	p.invincible = false
+	p.take_damage(999)
+	assert(p.dead == true, "无热血魂时不触发起身")
+	# reset 恢复每局限一次
+	p.reset()
+	assert(p.can_stand_up == true, "reset 后 can_stand_up 恢复 true")
+	p.queue_free()
+	print("v22 stand up ok")
+
+
+# ---- V2.2 角色专属必杀技 ----
+func _test_v22_special_skills() -> void:
+	# 清理前序测试可能遗留的同名 Autoload 节点（--script 模式 queue_free 延迟到帧末）
+	for n in root.get_children():
+		if n.name == "Economy" or n.name == "CharacterData":
+			root.remove_child(n)
+			n.free()
+	var cd_script := load("res://scripts/character_data.gd")
+	var cd = cd_script.new()
+	cd.name = "CharacterData"
+	root.add_child(cd)
+	# 手动实例化 Economy（--script 模式 Autoload 全局名不可用）
+	var econ_script := load("res://scripts/economy.gd")
+	var econ = econ_script.new()
+	econ.name = "Economy"
+	root.add_child(econ)
+	# 清理存档文件可能带来的跨测试残留解锁状态
+	if FileAccess.file_exists(econ.SPECIALS_SAVE_PATH):
+		DirAccess.remove_absolute(econ.SPECIALS_SAVE_PATH)
+	econ.unlocked_specials.clear()
+	# 5 个角色都有 special_skill / special_damage
+	for cid in ["pompadour", "fighter", "tank", "sprinter", "bosozoku"]:
+		var c = cd.get_character(cid)
+		assert(c.has("special_skill"), "%s 含 special_skill" % cid)
+		assert(c.has("special_damage"), "%s 含 special_damage" % cid)
+	assert(cd.get_character("pompadour").get("special_skill") == "mach_kick", "飞机头=马赫踢")
+	assert(cd.get_character("bosozoku").get("special_damage") == 8, "人间鱼雷伤害 8（贵≠强）")
+	# Economy 解锁/查询
+	assert(econ.has_special_unlocked("pompadour") == false, "初始未解锁马赫踢")
+	econ.unlock_special("mach_kick")
+	assert(econ.has_special_unlocked("pompadour") == true, "解锁后 has_special_unlocked 为 true")
+	# Player 已习得 → 释放个人武技
+	var p := load("res://scenes/player.tscn").instantiate() as Player
+	root.add_child(p)
+	p.apply_character("pompadour")
+	p.energy = Player.MAX_ENERGY
+	assert(p._try_release_personal_special() == true, "已习得时释放个人武技")
+	assert(is_equal_approx(p.energy, 0.0), "释放后能量清空")
+	p.queue_free()
+	econ.queue_free()
+	cd.queue_free()
+	print("v22 special skills ok")
+
+
+# ---- V2.2 兄弟连携 ----
+func _test_v22_combo_attack() -> void:
+	# game.gd 常量就位
+	var g := load("res://scripts/game.gd")
+	assert(g != null, "game.gd 加载成功")
+	assert(is_equal_approx(g.COMBO_ATTACK_RANGE, 60.0), "连携距离阈值 60")
+	assert(is_equal_approx(g.COMBO_ATTACK_COOLDOWN, 5.0), "连携冷却 5s")
+	assert(is_equal_approx(g.COMBO_ATTACK_DAMAGE_MULT, 2.0), "连携伤害倍率 2.0")
+	# 双玩家可同屏存活且分处 players 组
+	var p1 := load("res://scenes/player.tscn").instantiate() as Player
+	root.add_child(p1)
+	var p2 := load("res://scenes/player.tscn").instantiate() as Player
+	p2.player_index = 2
+	root.add_child(p2)
+	assert(p1.is_in_group("players") and p2.is_in_group("players"), "双玩家在 players 组")
+	# stood_up 信号存在
+	assert(p1.stood_up != null, "stood_up 信号已定义")
+	p1.queue_free()
+	p2.queue_free()
+	print("v22 combo attack ok")
+
+
+# ---- V2.2 书店必杀书 ----
+func _test_v22_shop_skill_books() -> void:
+	var economy_script := load("res://scripts/economy.gd")
+	var economy = economy_script.new()
+	root.add_child(economy)
+	var books := ["book_mach_kick", "book_mach_punch", "book_earthquake",
+		"book_tornado_kick", "book_human_torpedo"]
+	for bid in books:
+		assert(economy.SHOP_ITEMS.has(bid), "商店含 %s" % bid)
+		var it = economy.SHOP_ITEMS[bid]
+		assert(it.get("category") == "skill", "%s 属于 skill 分类" % bid)
+		assert(it.has("skill_id"), "%s 含 skill_id" % bid)
+		assert(int(it.get("price", 0)) > 0, "%s 有正价格" % bid)
+	# 人间鱼雷最贵
+	assert(economy.SHOP_ITEMS["book_human_torpedo"]["price"] == 8000, "人间鱼雷之书 8000")
+	# 购买必杀书后解锁对应技
+	economy.coins = 10000
+	var p := load("res://scenes/player.tscn").instantiate() as Player
+	root.add_child(p)
+	assert(economy.buy_item("book_mach_kick", p), "购买马赫踢之书成功")
+	assert(economy.is_special_learned("mach_kick"), "购买后 mach_kick 已习得")
+	assert(economy.has_special_unlocked("pompadour"), "pompadour 已解锁个人武技")
+	p.queue_free()
+	economy.queue_free()
+	print("v22 shop skill books ok")
+
+
+# ---- V2.2 关卡副标题 ----
+func _test_v22_level_subtitles() -> void:
+	var lv1 = LevelConfig.get_level(1)
+	assert(lv1.get("subtitle") == "鞋柜区·异变始动", "第1关副标题正确")
+	var lv2 = LevelConfig.get_level(2)
+	assert(lv2.get("subtitle") == "教室与走廊", "第2关副标题正确")
+	var lv3 = LevelConfig.get_level(3)
+	assert(lv3.get("subtitle") == "天台与体育馆", "第3关副标题正确")
+	var lv4 = LevelConfig.get_level(4)
+	assert(lv4.get("subtitle") == "商店街·霓虹夜", "第4关副标题正确")
+	var lv5 = LevelConfig.get_level(5)
+	assert(lv5.get("subtitle") == "工厂深处·终局", "第5关副标题正确")
+	# name 字段保持原值（向后兼容）
+	assert(lv1.get("name") == "黄昏町街道", "第1关 name 不变")
+	assert(lv5.get("name") == "终章·最终 Boss 战", "第5关 name 不变")
+	print("v22 subtitles ok")
+
+
+# ---- V2.2 自动贩卖机可破坏物 ----
+func _test_v22_vending_machine() -> void:
+	# 程序化创建 vending_machine 类型可破坏物
+	var d := StaticBody2D.new()
+	d.set_script(preload("res://scripts/destructible.gd"))
+	d.set("destructible_type", "vending_machine")
+	var body := ColorRect.new()
+	body.name = "Body"
+	d.add_child(body)
+	var hit_area := Area2D.new()
+	hit_area.name = "HitArea"
+	d.add_child(hit_area)
+	var cs := CollisionShape2D.new()
+	cs.shape = RectangleShape2D.new()
+	d.add_child(cs)
+	root.add_child(d)
+	# vending_machine 只需 2 次命中
+	assert(d._max_hits == 2, "vending_machine MAX_HITS=2")
+	d.take_damage(2)
+	assert(not d.is_queued_for_deletion(), "1 次命中不破坏（vending）")
+	d.take_damage(2)
+	assert(d.is_queued_for_deletion(), "2 次命中后 vending_machine 破坏")
+	# generic 类型仍为 3 次（回归）
+	var d2 := StaticBody2D.new()
+	d2.set_script(preload("res://scripts/destructible.gd"))
+	var body2 := ColorRect.new()
+	body2.name = "Body"
+	d2.add_child(body2)
+	var ha2 := Area2D.new()
+	ha2.name = "HitArea"
+	d2.add_child(ha2)
+	root.add_child(d2)
+	assert(d2._max_hits == 3, "generic MAX_HITS=3 不变")
+	d2.queue_free()
+	# 场景中存在 vending_machine 实例（level4）
+	var l4 := load("res://scenes/level4.tscn").instantiate() as Node
+	root.add_child(l4)
+	var found_vending := false
+	for child in l4.find_children("*", "Destructible", true, false):
+		if child.get("destructible_type") == "vending_machine":
+			found_vending = true
+	assert(found_vending, "level4.tscn 含 vending_machine 类型可破坏物")
+	l4.queue_free()
+	print("v22 vending machine ok")

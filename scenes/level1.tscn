@@ -509,6 +509,65 @@ offset_right = 1248.0
 offset_bottom = 720.0
 color = Color(0.10, 0.10, 0.12, 1)
 
+[node name="Decor" type="Node2D" parent="." groups=["decor"]]
+z_index = -5
+
+[node name="Locker1" type="ColorRect" parent="Decor"]
+offset_left = 130.0
+offset_top = 380.0
+offset_right = 160.0
+offset_bottom = 430.0
+color = Color(0.30, 0.22, 0.14, 1)
+
+[node name="Locker1Tag" type="ColorRect" parent="Decor"]
+offset_left = 142.0
+offset_top = 386.0
+offset_right = 148.0
+offset_bottom = 389.0
+color = Color(0.92, 0.90, 0.85, 1)
+
+[node name="Locker2" type="ColorRect" parent="Decor"]
+offset_left = 350.0
+offset_top = 380.0
+offset_right = 380.0
+offset_bottom = 430.0
+color = Color(0.28, 0.20, 0.13, 1)
+
+[node name="Locker2Tag" type="ColorRect" parent="Decor"]
+offset_left = 362.0
+offset_top = 386.0
+offset_right = 368.0
+offset_bottom = 389.0
+color = Color(0.92, 0.90, 0.85, 1)
+
+[node name="Locker3" type="ColorRect" parent="Decor"]
+offset_left = 980.0
+offset_top = 380.0
+offset_right = 1010.0
+offset_bottom = 430.0
+color = Color(0.30, 0.22, 0.14, 1)
+
+[node name="Locker3Tag" type="ColorRect" parent="Decor"]
+offset_left = 992.0
+offset_top = 386.0
+offset_right = 998.0
+offset_bottom = 389.0
+color = Color(0.92, 0.90, 0.85, 1)
+
+[node name="Backpack1" type="ColorRect" parent="Decor"]
+offset_left = 200.0
+offset_top = 476.0
+offset_right = 238.0
+offset_bottom = 490.0
+color = Color(0.15, 0.20, 0.45, 1)
+
+[node name="Backpack2" type="ColorRect" parent="Decor"]
+offset_left = 1050.0
+offset_top = 476.0
+offset_right = 1088.0
+offset_bottom = 490.0
+color = Color(0.20, 0.15, 0.40, 1)
+
 [node name="Boundaries" type="Node2D" parent="."]
 
 [node name="WallLeft" type="StaticBody2D" parent="Boundaries"]

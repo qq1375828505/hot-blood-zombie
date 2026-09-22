@@ -12,6 +12,9 @@ const CHARACTERS := {
 		"hp_mult": 1.0,
 		"jump_mult": 1.0,
 		"melee_range_mult": 1.0,
+		# ---- V2.2 专属必杀（个人武技）----
+		"special_skill": "mach_kick",
+		"special_damage": 15,
 	},
 	"fighter": {
 		"name": "格斗专家",
@@ -22,6 +25,8 @@ const CHARACTERS := {
 		"hp_mult": 0.85,
 		"jump_mult": 1.0,
 		"melee_range_mult": 1.1,
+		"special_skill": "mach_punch",
+		"special_damage": 18,
 	},
 	"sprinter": {
 		"name": "疾风飞毛腿",
@@ -32,6 +37,8 @@ const CHARACTERS := {
 		"hp_mult": 0.9,
 		"jump_mult": 1.25,
 		"melee_range_mult": 1.0,
+		"special_skill": "tornado_kick",
+		"special_damage": 14,
 	},
 	"tank": {
 		"name": "铁壁壮汉",
@@ -42,6 +49,8 @@ const CHARACTERS := {
 		"hp_mult": 1.4,
 		"jump_mult": 0.85,
 		"melee_range_mult": 1.3,
+		"special_skill": "earthquake",
+		"special_damage": 12,
 	},
 	"bosozoku": {
 		"name": "暴走族总长",
@@ -53,6 +62,9 @@ const CHARACTERS := {
 		"jump_mult": 1.15,
 		"melee_range_mult": 1.0,
 		"hidden": true,
+		# 贵≠强反差：书最贵 8000，但伤害仅 8，且有搞笑弹回演出
+		"special_skill": "human_torpedo",
+		"special_damage": 8,
 	},
 }
 

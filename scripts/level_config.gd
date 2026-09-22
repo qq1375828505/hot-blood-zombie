@@ -6,6 +6,7 @@ extends RefCounted
 const LEVELS = {
 	1: {
 		"name": "黄昏町街道",
+		"subtitle": "鞋柜区·异变始动",
 		"scene": "res://scenes/level1.tscn",
 		"waves": 5,
 		"wave_config": [
@@ -16,10 +17,11 @@ const LEVELS = {
 			{"walkers": 4, "runners": 2, "fat": 1, "interval": 1.0},
 			{"walkers": 5, "runners": 3, "fat": 1, "interval": 0.9},
 		],
-		"bg_color": Color(0.16, 0.12, 0.22, 1),
+		"bg_color": Color(0.25, 0.22, 0.18, 1),
 	},
 	2: {
 		"name": "白鹰高中",
+		"subtitle": "教室与走廊",
 		"scene": "res://scenes/level2.tscn",
 		"waves": 5,
 		"wave_config": [
@@ -29,10 +31,11 @@ const LEVELS = {
 			{"walkers": 5, "runners": 3, "fat": 1, "interval": 1.0},
 			{"walkers": 6, "runners": 3, "fat": 2, "interval": 0.8},
 		],
-		"bg_color": Color(0.12, 0.14, 0.18, 1),
+		"bg_color": Color(0.28, 0.25, 0.20, 1),
 	},
 	3: {
 		"name": "暴走族聚集地",
+		"subtitle": "天台与体育馆",
 		"scene": "res://scenes/level3.tscn",
 		"waves": 6,
 		"wave_config": [
@@ -43,10 +46,11 @@ const LEVELS = {
 			{"walkers": 7, "runners": 4, "fat": 2, "interval": 0.7},
 			{"walkers": 8, "runners": 5, "fat": 3, "interval": 0.6},
 		],
-		"bg_color": Color(0.18, 0.10, 0.12, 1),
+		"bg_color": Color(0.20, 0.25, 0.32, 1),
 	},
 	4: {
 		"name": "白岳制药工厂",
+		"subtitle": "商店街·霓虹夜",
 		"scene": "res://scenes/level4.tscn",
 		"waves": 6,
 		"wave_config": [
@@ -62,6 +66,7 @@ const LEVELS = {
 	},
 	5: {
 		"name": "终章·最终 Boss 战",
+		"subtitle": "工厂深处·终局",
 		"scene": "res://scenes/level5.tscn",
 		"waves": 3,
 		"wave_config": [
@@ -71,7 +76,7 @@ const LEVELS = {
 			# 第 3 波：Boss 波（boss_id 为新增可选字段，原有字段保留）
 			{"walkers": 3, "runners": 2, "fat": 1, "interval": 0.8, "boss_id": "final_boss"},
 		],
-		"bg_color": Color(0.08, 0.08, 0.10, 1),
+		"bg_color": Color(0.10, 0.12, 0.14, 1),
 	},
 }
 

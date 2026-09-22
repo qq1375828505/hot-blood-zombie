@@ -53,6 +53,16 @@ const ZOMBIE_TARGET_INTERVAL := 0.5
 # ---- V1.4 人机队友（bot）：2P 始终为 AI，桌面/安卓均生效 ----
 var bot_enabled: bool = true
 
+# ---- V2.2 兄弟连携：双人同刻 melee → 合体技 ----
+const COMBO_ATTACK_RANGE := 60.0
+const COMBO_ATTACK_COOLDOWN := 5.0
+const COMBO_ATTACK_DAMAGE_MULT := 2.0
+const COMBO_ATTACK_WINDOW := 0.3       # 双方 melee 时间窗口（秒）
+const COMBO_HIT_RANGE := 150.0         # 合体技前方命中范围
+var _combo_cooldown: float = 0.0
+var _p1_melee_time: float = -999.0
+var _p2_melee_time: float = -999.0
+
 
 func _ready() -> void:
 	spawn_timer = Timer.new()
@@ -97,6 +107,9 @@ func _ready() -> void:
 	# ---- V1.1 半尸化状态同步 HUD ----
 	player.half_zombie_changed.connect(_on_half_zombie_changed)
 	player2.half_zombie_changed.connect(_on_half_zombie_changed)
+	# ---- V2.2 根性起身信号（仅日志/反馈，不破坏现有连接）----
+	player.stood_up.connect(_on_player_stood_up)
+	player2.stood_up.connect(func(p_index: int) -> void: _on_player_stood_up(p_index))
 
 	# 连接场景中已放置的拾取物 + 监听后续动态生成的拾取物
 	_scan_for_pickups(self)
@@ -160,6 +173,9 @@ func _physics_process(delta: float) -> void:
 	if _zombie_target_timer <= 0.0:
 		_zombie_target_timer = ZOMBIE_TARGET_INTERVAL
 		_update_zombie_targets()
+	# ---- V2.2 合体技冷却倒计时 + 救援加速检测 ----
+	_combo_cooldown = maxf(_combo_cooldown - delta, 0.0)
+	_apply_rescue_haste()
 
 
 # ---- V1.1 双玩家：丧尸周期性切换到最近的存活玩家 ----
@@ -345,6 +361,12 @@ func _on_grenade_requested(pos: Vector2, dir: Vector2, source_player: Player = p
 
 
 func _on_melee_requested(pos: Vector2, dir: Vector2, source_player: Player = player) -> void:
+	# ---- V2.2 记录 melee 时间戳，供双人合体技检测 ----
+	if source_player == player:
+		_p1_melee_time = elapsed_time
+	elif source_player == player2:
+		_p2_melee_time = elapsed_time
+	_check_combo_attack()
 	var range_x := 60.0 * source_player.get_buff_multiplier("melee_range")
 	var dmg := int(round(source_player.current_melee_damage * source_player.get_buff_multiplier("attack")))
 	for child in zombies.get_children():
@@ -378,6 +400,84 @@ func _on_special_used(source_player: Player = player) -> void:
 			score += 5
 	hud.set_score(score)
 	summon_assist("default", source_player)
+
+
+# ======================================================================
+# V2.2 兄弟连携 / 救援增强 / 死亡回上街区
+# ======================================================================
+
+# 双人合体技检测：P1/P2 都存活、距离 < 60、0.3s 内双方都按了 melee、冷却就绪
+func _check_combo_attack() -> void:
+	if _combo_cooldown > 0.0 or game_over or level_transitioning:
+		return
+	if player.dead or player2.dead:
+		return
+	if player.global_position.distance_to(player2.global_position) >= COMBO_ATTACK_RANGE:
+		return
+	if absf(_p1_melee_time - _p2_melee_time) > COMBO_ATTACK_WINDOW:
+		return
+	_trigger_combo_attack()
+
+
+# 合体技效果：双方同时前冲，对前方 150px 敌人造成 (P1.atk + P2.atk)×2 伤害
+func _trigger_combo_attack() -> void:
+	_combo_cooldown = COMBO_ATTACK_COOLDOWN
+	player.velocity.x += player.facing * 200.0
+	player2.velocity.x += player2.facing * 200.0
+	player.set_expression("grin")
+	player2.set_expression("grin")
+	var mid: Vector2 = (player.global_position + player2.global_position) * 0.5
+	var fdir := player.facing
+	var p1_atk: int = maxi(player.current_melee_damage, 2)
+	var p2_atk: int = maxi(player2.current_melee_damage, 2)
+	var dmg: int = int(round((p1_atk + p2_atk) * COMBO_ATTACK_DAMAGE_MULT))
+	for z in zombies.get_children():
+		if z is Zombie and not z.is_queued_for_deletion():
+			var dx: float = z.global_position.x - mid.x
+			var dy: float = absf(z.global_position.y - mid.y)
+			if dx * float(fdir) > 0.0 and absf(dx) < COMBO_HIT_RANGE and dy < 80.0:
+				z.take_damage(dmg)
+				score += 5
+	hud.set_score(score)
+	print("V2.2 兄弟连携触发！伤害 %d" % dmg)
+
+
+# 救援加速：P2 贴近起身中的 P1（<30px）时，将其站起时间减半一次
+func _apply_rescue_haste() -> void:
+	if player.standing_up and not player.dead and not player2.dead:
+		if not player._stand_up_hastened \
+				and player.global_position.distance_to(player2.global_position) < 30.0:
+			player._stand_up_timer *= 0.5
+			player._stand_up_hastened = true
+
+
+# 根性起身反馈
+func _on_player_stood_up(p_index: int) -> void:
+	print("V2.2 根性起身：P%d 凭气势站了起来！" % p_index)
+
+
+# 死亡回上街区：当前关 > 1 时，延迟 2s 回到上一关并重整玩家
+var _rollback_in_progress: bool = false
+func _rollback_to_previous_level() -> void:
+	if _rollback_in_progress:
+		return
+	_rollback_in_progress = true
+	level_transitioning = true
+	spawn_timer.stop()
+	next_wave_timer.stop()
+	_show_transition_banner("回到上一个街区...")
+	print("V2.2 死亡回上街区：第%d关 → 第%d关" % [current_level, current_level - 1])
+	await get_tree().create_timer(2.0).timeout
+	if not is_instance_valid(self):
+		return
+	# 玩家状态重置：hp满、energy清、武器回pistol、近战清空
+	player.reset()
+	player2.reset()
+	# reset() 会把 is_bot 置 false，需重新把 P2 设回 bot
+	if bot_enabled:
+		player2.setup_as_bot(player)
+	_rollback_in_progress = false
+	load_level(current_level - 1)
 
 
 # ---- V1.1 收服结算 ----
@@ -648,6 +748,10 @@ func _on_player_died() -> void:
 	if not player.dead and not player2.dead:
 		return
 	if not (player.dead and player2.dead):
+		return
+	# ---- V2.2 死亡回上街区：当前关 > 1 时回退上一关，否则保持 game over ----
+	if current_level > 1:
+		_rollback_to_previous_level()
 		return
 	game_over = true
 	spawn_timer.stop()
