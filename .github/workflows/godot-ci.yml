@@ -79,15 +79,7 @@ jobs:
           echo "JDK 路径: $JAVA_DIR"
           # 3) 写入 Godot 编辑器设置：Java SDK + debug keystore（preset 留空时回退读取）
           mkdir -p "$HOME/.config/godot"
-          cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<EOF
-[gd_resource type="EditorSettings" format=3]
-
-[resource]
-android/java_sdk_path = "$JAVA_DIR"
-android/keystore/debug = "$HOME/.android/debug.keystore"
-android/keystore/debug_user = "androiddebugkey"
-android/keystore/debug_password = "android"
-EOF
+          printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nandroid/java_sdk_path = "%s"\nandroid/keystore/debug = "%s"\nandroid/keystore/debug_user = "androiddebugkey"\nandroid/keystore/debug_password = "android"\n' "$JAVA_DIR" "$HOME/.android/debug.keystore" > "$HOME/.config/godot/editor_settings-4.3.tres"
           echo "editor_settings 已写入: $HOME/.config/godot/editor_settings-4.3.tres"
 
       - name: 导出 APK（debug 签名）
