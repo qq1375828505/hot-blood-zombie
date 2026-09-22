@@ -55,11 +55,46 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US" -validity 9999
           fi
 
+      - name: 配置导出模板与编辑器设置
+        run: |
+          set -e
+          # 1) 镜像内置导出模板默认在 /root/.local，而容器 HOME=/github/home，
+          #    需把 4.3.stable 模板链接/复制到 HOME 下，否则报 No export template found。
+          TPL_SRC="$(find /root/.local /usr /opt -path '*export_templates/4.3.stable/android_debug.apk' 2>/dev/null | head -1 || true)"
+          if [ -z "$TPL_SRC" ]; then
+            TPL_SRC="$(find / -path '*export_templates/4.3.stable/android_debug.apk' 2>/dev/null | head -1 || true)"
+          fi
+          if [ -n "$TPL_SRC" ]; then
+            TPL_DIR="$(dirname "$TPL_SRC")"
+            mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
+            for f in "$TPL_DIR"/*; do
+              [ -f "$f" ] && cp -f "$f" "$HOME/.local/share/godot/export_templates/4.3.stable/" || true
+            done
+            echo "导出模板已就位: $(ls "$HOME/.local/share/godot/export_templates/4.3.stable" | wc -l) 个文件"
+          else
+            echo "警告：未找到 android_debug.apk 模板"
+          fi
+          # 2) 探测 JDK 路径（Godot Android 导出必需）
+          JAVA_DIR="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+          echo "JDK 路径: $JAVA_DIR"
+          # 3) 写入 Godot 编辑器设置：Java SDK + debug keystore（preset 留空时回退读取）
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<EOF
+[gd_resource type="EditorSettings" format=3]
+
+[resource]
+android/java_sdk_path = "$JAVA_DIR"
+android/keystore/debug = "$HOME/.android/debug.keystore"
+android/keystore/debug_user = "androiddebugkey"
+android/keystore/debug_password = "android"
+EOF
+          echo "editor_settings 已写入: $HOME/.config/godot/editor_settings-4.3.tres"
+
       - name: 导出 APK（debug 签名）
         run: |
           cd "$GITHUB_WORKSPACE"
           mkdir -p build/android
-          godot --headless --export-debug "Android" "build/android/hot-blood-zombie.apk" 2>&1 | tail -15
+          godot --headless --export-debug "Android" "build/android/hot-blood-zombie.apk" 2>&1 | tail -25
           ls -la build/android/
 
       - name: 上传 APK 产物
