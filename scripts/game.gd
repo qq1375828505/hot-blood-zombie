@@ -201,6 +201,13 @@ func _start_wave() -> void:
 	spawn_timer.wait_time = float(wc.get("interval", SPAWN_WAIT))
 	hud.set_wave(wave)
 	spawn_timer.start()
+	# V2.0：Boss 波——普通丧尸生成完毕后延迟 1 秒召唤 Boss（不占用 alive_needed 计数）
+	var boss_id: String = String(wc.get("boss_id", ""))
+	if boss_id != "":
+		var t := get_tree().create_timer(1.0)
+		t.timeout.connect(func() -> void:
+			if is_instance_valid(self) and not game_over and not level_transitioning:
+				spawn_boss(Vector2(640, 420), boss_id))
 
 
 # ---- V1.2 按 wave_config 构建本波丧尸类型队列并打散 ----
@@ -273,7 +280,9 @@ func _on_level_cleared() -> void:
 	level_transitioning = true
 	spawn_timer.stop()
 	next_wave_timer.stop()
-	if current_level < 3:
+	# V2.0 数据驱动：下一关存在则推进，否则进入最终胜利
+	var next_lv: Dictionary = LevelConfig.get_level(current_level + 1)
+	if not next_lv.is_empty():
 		var lv_name: String = LevelConfig.get_level(current_level).get("name", "")
 		print("V1.2 关卡通过：%s，准备进入下一关" % lv_name)
 		_show_transition_banner("第%d关 通过！" % current_level)
@@ -281,9 +290,9 @@ func _on_level_cleared() -> void:
 		if is_instance_valid(self) and not game_over:
 			load_level(current_level + 1)
 	else:
-		print("V1.2 全部关卡通关！")
-		_show_transition_banner("全部关卡通关！")
-		await get_tree().create_timer(2.0).timeout
+		print("V2.0 全部关卡通关！")
+		_show_transition_banner("终章通关！热血物语完结！")
+		await get_tree().create_timer(2.5).timeout
 		if is_instance_valid(self) and not game_over:
 			hud.show_game_over(score, wave)
 			game_over = true
@@ -653,7 +662,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not game_over and not Economy.shop_open:
 		if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_B:
 			_toggle_shop()
-	# ---- V1.2 关卡选择（简化调试）：数字键 1/2/3 直接跳关 ----
+	# ---- V1.2 关卡选择（简化调试）：数字键 1/2/3/4/5 直接跳关 ----
 	if not game_over and not level_transitioning:
 		if event is InputEventKey and event.pressed and not event.echo:
 			if event.keycode == KEY_1:
@@ -662,6 +671,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				load_level(2)
 			elif event.keycode == KEY_3:
 				load_level(3)
+			elif event.keycode == KEY_4:
+				load_level(4)
+			elif event.keycode == KEY_5:
+				load_level(5)
 
 
 # ---- V1.2 黑市商店开关 ----
@@ -713,8 +726,10 @@ func set_bot_enabled(enabled: bool) -> void:
 # ---- V1.3 首关 Boss 生成（独立函数，不改既有波次/经济/双人/暂停逻辑）----
 const BOSS_SCENE := preload("res://scenes/boss.tscn")
 
-func spawn_boss(pos: Vector2) -> Node:
+func spawn_boss(pos: Vector2, boss_id: String = "street_boss") -> Node:
 	var boss := BOSS_SCENE.instantiate() as Node
+	# V2.0：在 add_child 前设置 export 值（_ready 在 add_child 时执行）
+	boss.boss_id = boss_id
 	boss.global_position = pos
 	zombies.add_child(boss)
 	if boss.has_method("setup"):
@@ -731,7 +746,11 @@ func spawn_boss(pos: Vector2) -> Node:
 	if boss.has_signal("died"):
 		boss.died.connect(func(_b: Node2D) -> void:
 			hud.hide_boss_bar())
-	hud.show_boss_bar("街头混混头目", 400)
+	# V2.0：HUD 血条名称从 Boss 定义读取（不再写死）
+	var boss_def: Dictionary = EnemyDefs.get_boss_def(boss_id)
+	var boss_name: String = String(boss_def.get("name", boss_id))
+	var boss_max_hp: int = int(boss_def.get("hp", 400))
+	hud.show_boss_bar(boss_name, boss_max_hp)
 	return boss
 
 

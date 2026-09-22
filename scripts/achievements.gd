@@ -5,6 +5,7 @@ extends Node
 signal achievement_unlocked(id: String, name: String)
 
 const SAVE_PATH := "user://achievements.json"
+const SAVE_VERSION := 2  # V2.0 存档 schema 版本号：v1 无 version 字段，v2 增加 version 标记
 const POLL_INTERVAL := 0.5
 const ALL_WEAPONS := ["pistol", "machine_gun", "shotgun", "grenade"]
 const DRIVE_SECONDS_FOR_VEHICLE_ACH := 30.0  # 载具撞击无法精确轮询，改用“累计驾驶 30 秒”替代指标
@@ -201,9 +202,9 @@ func _show_toast(name: String) -> void:
 			layer.queue_free())
 
 
-# ---- 本地存档（user:// JSON）----
+# ---- 本地存档（user:// JSON，V2.0 增加 version 字段）----
 func save_save() -> void:
-	var data := {"unlocked": unlocked, "stats": stats}
+	var data := {"version": SAVE_VERSION, "unlocked": unlocked, "stats": stats}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data))
@@ -212,11 +213,23 @@ func save_save() -> void:
 func load_save() -> void:
 	unlocked = {}
 	stats = {}
+	var need_migrate := false  # 旧档 v1（无 version 字段）需要迁移写回
 	if FileAccess.file_exists(SAVE_PATH):
 		var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
 		if f:
 			var parsed = JSON.parse_string(f.get_as_text())
 			if parsed is Dictionary:
+				# ---- V2.0 版本检查与迁移 ----
+				if not parsed.has("version"):
+					# v1 旧档：无 version 字段，结构为 {unlocked, stats}，与 v2 字段兼容
+					need_migrate = true
+				else:
+					var ver: int = int(parsed.get("version", 0))
+					if ver > SAVE_VERSION:
+						# 未来版本档：打印警告，仍尽力加载 unlocked/stats
+						push_warning("Achievements: 存档版本 v%d 高于当前 v%d，可能存在兼容性问题" % [ver, SAVE_VERSION])
+					# ver == SAVE_VERSION：直接加载；ver < SAVE_VERSION：当前仅 v1→v2 兼容，同上
+				# 加载数据（任何版本都尽量提取 unlocked/stats）
 				if parsed.get("unlocked") is Dictionary:
 					unlocked = parsed["unlocked"]
 				if parsed.get("stats") is Dictionary:
@@ -234,6 +247,9 @@ func load_save() -> void:
 		stats["vehicle_drive_time"] = 0.0
 	if not stats.has("weapons_used"):
 		stats["weapons_used"] = []
+	# v1 旧档迁移：补写 version=2 并持久化写回磁盘（unlocked/stats 完整保留）
+	if need_migrate:
+		save_save()
 
 
 func reset_save() -> void:

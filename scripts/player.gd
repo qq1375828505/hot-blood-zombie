@@ -24,13 +24,10 @@ const MAX_HP := 100
 const MAX_AMMO := 24
 const MAX_ENERGY := 100.0
 
-# ---- 武器定义表：冷却 / 最大弹药（-1 无限）/ 伤害 / 子弹速度 ----
-const WEAPONS := {
-	"pistol": {"cooldown": 0.25, "max_ammo": -1, "damage": 2, "speed": 640.0},
-	"machine_gun": {"cooldown": 0.08, "max_ammo": 120, "damage": 2, "speed": 900.0},
-	"shotgun": {"cooldown": 0.6, "max_ammo": 24, "damage": 1, "speed": 560.0},
-	"grenade": {"cooldown": 1.0, "max_ammo": 3, "damage": 8, "speed": 0.0},
-}
+# ---- 武器定义表（V2.0 外置至 Weapons 单例）：冷却 / 最大弹药（-1 无限）/ 伤害 / 子弹速度 ----
+# 使用 static var 引用 Weapons.WEAPONS（Weapons.WEAPONS 为 static var，支持 DLC 运行时追加）。
+# 保持 Player.WEAPONS 对外可访问（game.gd 中 Player.WEAPONS.get(w, {}) 引用不变）。
+static var WEAPONS := Weapons.WEAPONS
 
 var hp := MAX_HP
 var ammo := MAX_AMMO  # 遗留弹药计数（冒烟测试 / 旧掉落兼容）

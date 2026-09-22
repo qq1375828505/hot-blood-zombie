@@ -1,9 +1,10 @@
 class_name Boss
 extends CharacterBody2D
 # V1.3 首关 Boss「街头混混头目」：3 段磨血战、阶段切换演出、弱点窗口、召唤小怪、狂暴吸血。
-# 独立实现，不继承 Zombie/Elite；数据全部从 EnemyDefs.get_boss_def("street_boss") 读取。
+# 独立实现，不继承 Zombie/Elite；数据全部从 EnemyDefs.get_boss_def(boss_id) 读取。
+# V2.0：boss_id 改为 @export，由场景/生成方指定（默认 street_boss 保持首关行为不变）。
 
-const BOSS_ID := "street_boss"
+@export var boss_id: String = "street_boss"
 const GRAVITY := 980.0
 const CONTACT_DAMAGE_RADIUS := 60.0
 const CONTACT_COOLDOWN := 1.5
@@ -61,9 +62,9 @@ const ZOMBIE_SCENE := preload("res://scenes/zombie.tscn")
 
 
 func _ready() -> void:
-	var def := EnemyDefs.get_boss_def(BOSS_ID)
+	var def := EnemyDefs.get_boss_def(boss_id)
 	if def.is_empty():
-		push_error("Boss 定义缺失：" + BOSS_ID)
+		push_error("Boss 定义缺失：" + boss_id)
 		return
 	max_hp = int(def.get("hp", 400))
 	hp = max_hp
@@ -151,7 +152,7 @@ func _check_phase() -> void:
 
 
 func _apply_phase_def(phase: int) -> void:
-	var def := EnemyDefs.get_boss_def(BOSS_ID)
+	var def := EnemyDefs.get_boss_def(boss_id)
 	var phases: Array = def.get("phases", [])
 	_phase_def = {}
 	for p in phases:

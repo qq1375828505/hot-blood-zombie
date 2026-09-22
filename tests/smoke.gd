@@ -34,6 +34,11 @@ func _run() -> void:
 	_test_elites()
 	_test_boss()
 	_test_bot_teammate()
+	_test_v2_levels()
+	_test_final_boss()
+	_test_weapons_external()
+	_test_dlc_registry()
+	_test_save_version()
 	print("== 全部通过 ==")
 	quit(0)
 
@@ -921,3 +926,215 @@ func _test_bot_teammate() -> void:
 	var game_script := load("res://scripts/game.gd")
 	assert(game_script != null, "game.gd 加载成功")
 	print("bot teammate ok")
+
+
+# ---- V2.0 第四章与终章关卡 ----
+func _test_v2_levels() -> void:
+	# 第 4 关配置
+	var lv4 = LevelConfig.get_level(4)
+	assert(not lv4.is_empty(), "第4关配置存在")
+	assert(lv4.get("name") == "白岳制药工厂", "第4关名称正确")
+	assert(lv4.get("scene") == "res://scenes/level4.tscn", "第4关场景路径正确")
+	assert(LevelConfig.get_total_waves(4) == 6, "第4关 6 波")
+	assert(lv4.get("bg_color") == Color(0.10, 0.12, 0.14, 1), "第4关灰白冷调配色")
+	# 第 5 关配置
+	var lv5 = LevelConfig.get_level(5)
+	assert(not lv5.is_empty(), "第5关配置存在")
+	assert(lv5.get("name") == "终章·最终 Boss 战", "第5关名称正确")
+	assert(lv5.get("scene") == "res://scenes/level5.tscn", "第5关场景路径正确")
+	assert(LevelConfig.get_total_waves(5) == 3, "第5关 3 波")
+	# 第 5 关第 3 波含 boss_id
+	var wc5_3 = LevelConfig.get_wave_config(5, 2)
+	assert(not wc5_3.is_empty(), "第5关第3波波次配置非空")
+	assert(wc5_3.has("boss_id"), "第5关第3波含 boss_id 字段")
+	assert(wc5_3.get("boss_id") == "final_boss", "第5关第3波 boss_id 为 final_boss")
+	# 第 4/5 关每波波次配置非空
+	for lv_idx in [4, 5]:
+		var total = LevelConfig.get_total_waves(lv_idx)
+		for w in range(total):
+			var wc = LevelConfig.get_wave_config(lv_idx, w)
+			assert(not wc.is_empty(), "第%d关第%d波波次配置非空" % [lv_idx, w + 1])
+	# level4.tscn / level5.tscn 场景加载
+	var l4_scene := load("res://scenes/level4.tscn")
+	assert(l4_scene != null, "level4.tscn 加载成功")
+	var l4: Node = l4_scene.instantiate()
+	assert(l4 != null, "level4 实例化成功")
+	root.add_child(l4)
+	l4.queue_free()
+	var l5_scene := load("res://scenes/level5.tscn")
+	assert(l5_scene != null, "level5.tscn 加载成功")
+	var l5: Node = l5_scene.instantiate()
+	assert(l5 != null, "level5 实例化成功")
+	root.add_child(l5)
+	l5.queue_free()
+	# 第 6 关不存在（数据驱动边界）
+	assert(LevelConfig.get_level(6).is_empty(), "第6关不存在（数据驱动边界）")
+	print("v2 levels ok")
+
+
+# ---- V2.0 最终 Boss ----
+func _test_final_boss() -> void:
+	# final_boss 定义
+	var def = EnemyDefs.get_boss_def("final_boss")
+	assert(not def.is_empty(), "final_boss 定义存在")
+	assert(def.get("name") == "白岳制药·究极改造体", "final_boss 名称正确")
+	assert(def.get("ability") == 10.0, "final_boss 能力值 10（Boss 上限）")
+	assert(def.get("hp") == 800, "final_boss 血量 800（磨血战）")
+	assert(def.get("lifesteal_rate") == 0.10, "final_boss 吸血率 10%")
+	assert(def.get("super_armor") == true, "final_boss 霸体 true")
+	# 3 阶段定义
+	var phases = def.get("phases", [])
+	assert(phases.size() == 3, "final_boss 3 阶段")
+	# 阶段 3 狂暴：吸血×2
+	var phase3 = phases[2]
+	assert(phase3.get("lifesteal_mult") == 2.0, "final_boss 阶段3 吸血×2（狂暴20%）")
+	assert(phase3.get("summon_count") == 5, "final_boss 阶段3 召唤5只小怪")
+	# boss.gd 可配置 boss_id：实例化前设置 export 值
+	var bs := load("res://scenes/boss.tscn")
+	var b: Node = bs.instantiate()
+	b.boss_id = "final_boss"
+	root.add_child(b)
+	assert(b.hp == 800, "配置 boss_id=final_boss 后血量 800")
+	assert(b.max_hp == 800, "配置 boss_id=final_boss 后最大血量 800")
+	assert(b.get_current_ability() == 10.0, "配置 boss_id=final_boss 后能力 10")
+	assert(b.boss_id == "final_boss", "boss_id export 值正确")
+	b.queue_free()
+	# 默认 boss_id 仍为 street_boss（首关行为不变）
+	var b2: Node = bs.instantiate()
+	root.add_child(b2)
+	assert(b2.hp == 400, "默认 boss_id=street_boss 血量 400（首关行为不变）")
+	b2.queue_free()
+	print("final boss ok")
+
+
+# ---- V2.0 武器表外置 ----
+func _test_weapons_external() -> void:
+	# Weapons 类静态表
+	assert(Weapons.WEAPONS.size() == 4, "Weapons.WEAPONS 含 4 把基础武器")
+	assert(Weapons.has_weapon("pistol"), "Weapons.has_weapon(pistol)")
+	assert(Weapons.has_weapon("machine_gun"), "Weapons.has_weapon(machine_gun)")
+	assert(Weapons.has_weapon("shotgun"), "Weapons.has_weapon(shotgun)")
+	assert(Weapons.has_weapon("grenade"), "Weapons.has_weapon(grenade)")
+	assert(not Weapons.has_weapon("invalid"), "Weapons.has_weapon(invalid) 为 false")
+	# get_weapon
+	var pistol_def = Weapons.get_weapon("pistol")
+	assert(pistol_def.get("damage") == 2, "pistol damage=2")
+	assert(pistol_def.get("max_ammo") == -1, "pistol max_ammo=-1（无限）")
+	assert(Weapons.get_weapon("nonexistent").is_empty(), "不存在武器返回空字典")
+	# get_all_weapon_names
+	var names = Weapons.get_all_weapon_names()
+	assert(names.size() == 4, "get_all_weapon_names 返回 4 个")
+	# register_weapon（DLC 追加）
+	Weapons.register_weapon("dlc_laser", {"cooldown": 0.1, "max_ammo": 50, "damage": 3, "speed": 1200.0})
+	assert(Weapons.has_weapon("dlc_laser"), "register_weapon 后 dlc_laser 存在")
+	assert(Weapons.get_weapon("dlc_laser").get("damage") == 3, "DLC 武器 damage=3")
+	# 清理 DLC 武器（避免影响其他测试）
+	var wt: Dictionary = Weapons.WEAPONS
+	wt.erase("dlc_laser")
+	assert(not Weapons.has_weapon("dlc_laser"), "清理后 dlc_laser 不存在")
+	# Player.WEAPONS 向后兼容（引用同一外置表）
+	var p := load("res://scenes/player.tscn").instantiate() as Player
+	root.add_child(p)
+	assert(p.WEAPONS.size() == 4, "Player.WEAPONS 仍含 4 把武器（向后兼容）")
+	assert(p.WEAPONS.get("pistol", {}).get("damage") == 2, "Player.WEAPONS.pistol.damage=2")
+	p.queue_free()
+	print("weapons external ok")
+
+
+# ---- V2.0 DLC 内容注册表 ----
+func _test_dlc_registry() -> void:
+	# 注册 DLC
+	var info := {
+		"name": "测试DLC",
+		"version": "1.0.0",
+		"contents": {
+			"weapons": [{"name": "dlc_sword", "def": {"cooldown": 0.3, "max_ammo": -1, "damage": 5, "speed": 0.0}}],
+			"characters": [{"id": "dlc_char", "name": "DLC角色"}],
+			"enemies": [{"id": "dlc_enemy", "name": "DLC敌人"}],
+			"levels": [{"id": 6, "name": "DLC关卡"}],
+		}
+	}
+	DlcRegistry.register_dlc("test_dlc", info)
+	assert(DlcRegistry.has_dlc("test_dlc"), "has_dlc(test_dlc) 为 true")
+	assert(not DlcRegistry.has_dlc("nonexistent"), "has_dlc(nonexistent) 为 false")
+	# dlc_id 查询
+	var dlc_info = DlcRegistry.dlc_id("test_dlc")
+	assert(not dlc_info.is_empty(), "dlc_id() 返回非空")
+	assert(dlc_info.get("name") == "测试DLC", "DLC 名称正确")
+	assert(dlc_info.get("version") == "1.0.0", "DLC 版本正确")
+	assert(DlcRegistry.dlc_id("nonexistent").is_empty(), "不存在 DLC 返回空字典")
+	# get_all_dlc_ids
+	assert(DlcRegistry.get_all_dlc_ids().has("test_dlc"), "get_all_dlc_ids 含 test_dlc")
+	# get_contents
+	var weapons = DlcRegistry.get_contents("test_dlc", "weapons")
+	assert(weapons.size() == 1, "DLC weapons 含 1 条")
+	var chars = DlcRegistry.get_contents("test_dlc", "characters")
+	assert(chars.size() == 1, "DLC characters 含 1 条")
+	assert(DlcRegistry.get_contents("test_dlc", "nonexistent_cat").size() == 0, "不存在类别返回空数组")
+	# 启用前：get_all_weapons 不含 DLC 武器
+	var all_w_before = DlcRegistry.get_all_weapons()
+	assert(not all_w_before.has("dlc_sword"), "启用前 get_all_weapons 不含 dlc_sword")
+	# 启用 DLC
+	DlcRegistry.enable_dlc("test_dlc", true)
+	assert(DlcRegistry.is_dlc_enabled("test_dlc"), "启用后 is_dlc_enabled 为 true")
+	# 启用后：get_all_weapons 含 DLC 武器
+	var all_w_after = DlcRegistry.get_all_weapons()
+	assert(all_w_after.has("dlc_sword"), "启用后 get_all_weapons 含 dlc_sword")
+	assert(all_w_after.get("dlc_sword", {}).get("damage") == 5, "DLC 武器 damage=5")
+	assert(all_w_after.has("pistol"), "合并表仍含基础武器 pistol")
+	# get_all_characters/enemies/levels
+	assert(DlcRegistry.get_all_characters().size() == 1, "启用后 get_all_characters 含 1 条")
+	assert(DlcRegistry.get_all_enemies().size() == 1, "启用后 get_all_enemies 含 1 条")
+	assert(DlcRegistry.get_all_levels().size() == 1, "启用后 get_all_levels 含 1 条")
+	# 禁用 DLC
+	DlcRegistry.enable_dlc("test_dlc", false)
+	assert(not DlcRegistry.is_dlc_enabled("test_dlc"), "禁用后 is_dlc_enabled 为 false")
+	var all_w_disabled = DlcRegistry.get_all_weapons()
+	assert(not all_w_disabled.has("dlc_sword"), "禁用后 get_all_weapons 不含 dlc_sword")
+	assert(DlcRegistry.get_all_characters().size() == 0, "禁用后 get_all_characters 为空")
+	print("dlc registry ok")
+
+
+# ---- V2.0 存档 schema 版本化 ----
+func _test_save_version() -> void:
+	# SAVE_VERSION 常量
+	var ach_script := load("res://scripts/achievements.gd")
+	var ach = ach_script.new()
+	root.add_child(ach)
+	assert(ach.SAVE_VERSION == 2, "SAVE_VERSION = 2")
+	# 保存后存档含 version 字段
+	ach.unlock("first_kill")
+	ach.save_save()
+	var f := FileAccess.open(ach.SAVE_PATH, FileAccess.READ)
+	assert(f != null, "存档文件可读")
+	var parsed = JSON.parse_string(f.get_as_text())
+	assert(parsed is Dictionary, "存档 JSON 解析为字典")
+	assert(parsed.has("version"), "存档含 version 字段")
+	assert(int(parsed.get("version")) == 2, "存档 version = 2")
+	assert(parsed.has("unlocked"), "存档含 unlocked 字段")
+	assert(parsed.has("stats"), "存档含 stats 字段")
+	# v1 旧档迁移：写入无 version 的旧档格式
+	var v1_data := {"unlocked": {"hundred_kills": true}, "stats": {"kills_total": 100}}
+	var f2 := FileAccess.open(ach.SAVE_PATH, FileAccess.WRITE)
+	f2.store_string(JSON.stringify(v1_data))
+	f2 = null  # 释放写文件句柄，确保数据落盘后再读取
+	# 重新加载（应触发 v1→v2 迁移）
+	ach.unlocked.clear()
+	ach.stats.clear()
+	ach.load_save()
+	# 迁移后成就数据不丢失
+	assert(ach.is_unlocked("hundred_kills"), "v1 迁移后 hundred_kills 成就保留")
+	assert(int(ach.stats.get("kills_total", 0)) == 100, "v1 迁移后 kills_total=100 保留")
+	# 迁移后存档已写回 v2 格式
+	var f3 := FileAccess.open(ach.SAVE_PATH, FileAccess.READ)
+	var migrated = JSON.parse_string(f3.get_as_text())
+	assert(migrated.has("version"), "迁移后存档含 version 字段")
+	assert(int(migrated.get("version")) == 2, "迁移后存档 version=2")
+	# reset_save 后存档也含 version
+	ach.reset_save()
+	var f4 := FileAccess.open(ach.SAVE_PATH, FileAccess.READ)
+	var reset_data = JSON.parse_string(f4.get_as_text())
+	assert(reset_data.has("version"), "reset_save 后存档含 version 字段")
+	assert(int(reset_data.get("version")) == 2, "reset_save 后存档 version=2")
+	ach.queue_free()
+	print("save version ok")

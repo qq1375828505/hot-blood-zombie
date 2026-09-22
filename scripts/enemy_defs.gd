@@ -145,6 +145,61 @@ const BOSSES := {
 		"slam_radius": 130.0,
 		"slam_damage": 32,
 	},
+	"final_boss": {
+		"name": "白岳制药·究极改造体",
+		"ability": 10.0,                 # Boss 能力值上限 10
+		"hp": 800,                       # 磨血战高血量
+		"damage": 30,
+		"speed": 110.0,
+		"lifesteal_rate": 0.10,          # Boss 吸血 10%
+		"dodge_chance": 0.10,
+		"dodge_cooldown": 2.0,
+		"super_armor": true,
+		"stun_resist": 0.95,
+		"phases": [
+			{
+				"phase": 1,
+				"hp_threshold": 0.66,
+				"name": "原液压制",
+				"speed_mult": 1.0,
+				"damage_mult": 1.0,
+				"attacks": ["punch_combo", "body_slam"],
+				"summon_minions": false,
+			},
+			{
+				"phase": 2,
+				"hp_threshold": 0.33,
+				"name": "改造冲刺",
+				"speed_mult": 1.3,
+				"damage_mult": 1.3,
+				"attacks": ["punch_combo", "dash_charge", "body_slam"],
+				"summon_minions": true,
+				"summon_interval": 11.0,
+				"summon_count": 4,
+			},
+			{
+				"phase": 3,
+				"hp_threshold": 0.0,
+				"name": "究极狂暴",
+				"speed_mult": 1.6,
+				"damage_mult": 1.5,
+				"attacks": ["punch_combo", "dash_charge", "body_slam", "lifesteal_frenzy"],
+				"summon_minions": true,
+				"summon_interval": 9.0,
+				"summon_count": 5,
+				"lifesteal_mult": 2.0,       # 阶段 3 吸血强化至 20%
+			},
+		],
+		"weak_point": {
+			"description": "阶段切换后3秒硬直窗口，伤害×2",
+			"stun_duration": 3.0,
+			"damage_mult": 2.0,
+		},
+		"dash_speed": 520.0,
+		"dash_range": 260.0,
+		"slam_radius": 150.0,
+		"slam_damage": 40,
+	},
 }
 
 # ---- 爆发状态定义（普通小怪可达 2~3 能力）----
