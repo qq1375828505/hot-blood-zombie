@@ -88,7 +88,7 @@ func _build_hp_blocks() -> void:
 	for i in HP_BLOCK_COUNT:
 		var r := ColorRect.new()
 		r.custom_minimum_size = Vector2(6, 10)
-		r.color = Color(0.85, 0.2, 0.2, 1)
+		r.color = Color(1.0, 0.35, 0.25, 1)  # FC 热血红橙
 		hp_blocks.add_child(r)
 		_hp_rects.append(r)
 
@@ -97,7 +97,7 @@ func _build_hp_blocks2() -> void:
 	for i in HP_BLOCK_COUNT:
 		var r := ColorRect.new()
 		r.custom_minimum_size = Vector2(6, 10)
-		r.color = Color(0.2, 0.45, 0.95, 1)
+		r.color = Color(0.95, 0.35, 0.75, 1)  # 友方洋红
 		hp_blocks2.add_child(r)
 		_hp_rects2.append(r)
 
