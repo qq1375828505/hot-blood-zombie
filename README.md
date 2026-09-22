@@ -1,151 +1,91 @@
-# 热血物语：末日丧尸（Hot-Blood Zombie）
+# 🔥 热血物语：末日丧尸（Hot-Blood Zombie）
 
-不良少年 × 丧尸射击的 2.5D 横版动作游戏。灵感来自热血系列（国夫君/くにおくん）的校园不良风格与合金弹头（Metal Slug）的横版射击玩法，全部内容原创。
+> **不良少年 × 丧尸末日 × 热血格斗** —— 2.5D 横版清版动作游戏
+> 灵感致敬热血系列（くにおくん）的校园不良群架与街头闹剧，全部内容原创，免费开源。
 
-- 引擎：Godot 4.3（GDScript，gl_compatibility 渲染）
-- 目标平台：Android（首发） / Windows / macOS / Web（同一套工程导出）
-- 题材：原创。城市爆发丧尸病毒，热血不良少年持枪保卫校园与街道
-- 打包方式：**GitHub Actions 自动打包**（推送到 main 即自动出安卓 APK），不在本地打包
+[![Godot CI 打包](https://github.com/qq1375828505/hot-blood-zombie/actions/workflows/godot-ci.yml/badge.svg)](https://github.com/qq1375828505/hot-blood-zombie/actions/workflows/godot-ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Godot](https://img.shields.io/badge/Engine-Godot%204.3-478cbf.svg)](https://godotengine.org)
+[![Platform](https://img.shields.io/badge/Platform-Android%20首发光--亮.svg)](#下载安装)
 
-## 玩法
+![美术概念预览](docs/images/screenshot-concept.jpg)
 
-横版丧尸射击 + 波次生存，热血系列风格包装：
+黄昏町爆发神秘病毒，街头的同学、暴走族、学生会集体变成了"丧尸不良"。
+你——热血高校的最后一批不良少年，带着兄弟抄起铁管、轮胎和垃圾桶盖，一路打回校园、打穿商店街、打进白岳制药工厂深处。不打枪的枪战游戏，拳头和街头道具才是主角。
 
-- 移动 / 跳跃 / 下蹲，拳脚近战回能量，持枪射击消耗弹药
-- 四种武器：手枪 / 冲锋枪 / 霰弹枪 / 手雷，黑市可购买升级
-- 热血必杀：能量攒满后释放全屏震荡波清场
-- 格斗连击 / 蓄力重击 / 援护召唤（收服丧尸后可用）
-- 载具改装（火神炮 + 主炮）、半尸化变身、友军伤害开关
-- 5 名可选角色（倍率差异化，暴走族总长为隐藏角色）
-- 丧尸三种基础型 + 2 种精英 + 多阶段 Boss，全部带吸血/躲避/扛伤 AI
-- 2P 为纯 AI 人机队友（单机游戏，无真实双人输入）
-- 经济黑市 / 成就系统 / 关卡推进（黄昏町→白鹰高中→暴走族聚集地）
+---
 
-## 操作（桌面端）
+## 🎮 玩法亮点（热血化核心）
 
-| 按键 | 动作 |
+| 系统 | 说明 |
 |---|---|
-| A / D 或 ← → | 移动 |
-| W / ↑ / 空格 | 跳跃 |
-| S / ↓ | 下蹲（减速） |
-| J 或 鼠标左键 | 射击 |
-| K | 近战（回能量） |
-| L | 热血必杀（能量满时） |
-| R | 死亡后重开 |
+| **拳脚连招为主力** | A 拳 3 段、B 脚 2 段、跳踢、冲刺拳，拳脚交替第 3 击伤害 ×1.5 |
+| **日用品武器** | 铁管 / 轮胎 / 垃圾桶盖随处可捡，有耐久、会脱手；垃圾桶盖能格挡减伤 |
+| **枪是稀有掉落** | 手枪 / 冲锋枪 / 霰弹枪 / 手雷只在精英与 Boss 身上 15% 掉落，弹药宝贵 |
+| **人形敌会"人味"** | 丧尸化不良会发呆、偷吃、看表、对空气争论、两只互殴记仇追打 |
+| **打残收服** | 近战打残 → 抱头求饶 → 收为援护召唤，帮你冲撞敌人 |
+| **根性気力** | 被打趴不死，消耗気力站起喘气继续打（热血物语招牌） |
+| **必杀 = 个人武技** | 马赫踢 / 马赫拳 / 大地震击 / 旋风踢 / 人间鱼雷，书店买书永久习得 |
+| **兄弟连携** | AI 2P 全程跟随，合体技范围清场、倒地救援、挡枪 |
+| **Boss 是人** | 暴走族总长·鬼冢、学生会会长·白岳——格斗技、嘲讽、叫人，跪姿遗言 |
 
-## 操作（移动端）
+## 👥 可选角色（5 名，特性差异化）
 
-- 左侧虚拟摇杆控制移动
-- 右侧触屏按钮：跳跃 / 下蹲 / 射击 / 近战 / 必杀 / 重开，另附商店 / 互动 / 暂停键
-- HUD 按 6.9 寸横屏安全区适配
-- headless / 桌面环境下触控层自动隐藏，不影响桌面键鼠调试
+| 角色 | 定位 | 特性 |
+|---|---|---|
+| 国夫·转生（原创） | 均衡 | 马赫踢必杀，数值全面 |
+| 阿力·改（原创） | 攻速 | 马赫拳更快，出拳第 1 击伤害高 |
+| 疾风 | 速度 | 移动更快，跳踢伤害加成 |
+| 铁壁 | 力量 | 血厚防高，垃圾桶盖格挡更强 |
+| 暴走族总长·鬼冢 | 隐藏 | 通关解锁，人间鱼雷（最贵但最弱，致敬热血反差梗） |
 
-## GitHub 打包（推荐方式）
+## 🗺️ 关卡（5 章，日常被丧尸扭曲）
 
-本工程配置了 GitHub Actions 工作流（`.github/workflows/godot-ci.yml`），推送到 `main` 分支后自动执行：
+1. **黄昏町·鞋柜区** —— 开局异变，街边自动贩卖机打爆掉补给
+2. **白鹰高中·教室走廊** —— 课桌椅当掩体，鞋柜翻出装备
+3. **天台与体育馆** —— 篮球当投掷物，体育器材全变武器
+4. **商店街·霓虹夜** —— 商店、霓虹灯、夜市摊位，丧尸化的暴走族聚集地
+5. **白岳制药·工厂终局** —— 格斗竞技场擂台，最终 Boss 学生会会长
 
-1. 无头导入（检查脚本/场景错误）
-2. 冒烟测试（`tests/smoke.gd`）
-3. 导出安卓调试版 APK（arm64-v8a，横屏）
-4. 上传 APK 到 Actions 产物（Artifacts）
+## 🧱 技术栈
 
-推送方法：
+- **引擎**：Godot 4.3（GDScript，gl_compatibility 渲染，1280×720 画布）
+- **目标平台**：Android（首发，arm64）/ Windows / macOS / Web 同一套工程
+- **存档**：user:// JSON，schema 版本化自动迁移
+- **扩展性**：数据驱动（角色 / 关卡 / 商店 / Buff / 成就 / 武器表全部外置），`dlc_registry.gd` 注册表预留 DLC 与变体系统挂载点
 
-```bash
-git init
-git add .
-git commit -m "热血物语：末日丧尸 V2.0"
-git branch -M main
-git remote add origin https://github.com/<你的用户名>/<仓库名>.git
-git push -u origin main
-```
+## 📥 下载安装
 
-在 GitHub 仓库页面点「Actions」查看构建，构建成功后点顶部「Summary」→「Artifacts」下载 `hot-blood-zombie-android-apk` 即可安装。
+- **安卓 APK**：进入 [Releases](https://github.com/qq1375828505/hot-blood-zombie/releases) 下载最新版（debug 签名，可直接安装试玩）
+- **本地运行**：安装 Godot 4.3 → 打开 `project.godot` → 按 F5
+- **桌面操作**：A/D 移动，W/空格 跳，S 下蹲，J 射击，K 近战，L 必杀，R 重开
+- **移动端**：左侧虚拟摇杆 + 右侧跳跃 / 下蹲 / 射击 / 近战 / 必杀 / 重开触屏键，HUD 按 6.9 寸横屏安全区适配；2P 为 AI 人机（单机）
 
-打正式发布 tag 可自动触发一次打包：
+## ⚙️ GitHub Actions 自动打包
 
-```bash
-git tag v2.0
-git push origin v2.0
-```
-
-> 注意：CI 使用 `barichello/godot-ci:4.3` 镜像（内置 Godot 4.3 + Android SDK + 导出模板），无需本地装 SDK。正式上架商店时需在 `export_presets.cfg` 配置自己的 release keystore，并在本地导出签名 AAB（keystore 密钥不能提交到仓库）。
-
-## 本地导出（备选）
-
-- 首发平台为 Android（横屏，arm64-v8a）。
-- 导出步骤：用 Godot 4.3 打开本工程 → 菜单「项目」→「导出…」→ 选择已配置好的 `Android` 预设 →「导出项目」，输出 APK 或 AAB。
-- 环境依赖：需准备 Android SDK / Build-Tools / Platform-Tools 与 JDK 17，并在 Godot 编辑器「编辑器设置 → 导出 → Android」中指定 SDK 路径与调试 keystore，详见 Godot 官方导出文档。
-- 签名：debug 包使用 Godot 默认 debug keystore；release 包需在 `export_presets.cfg` 的 `keystore/release` 处配置自己的发布签名 keystore 与别名密码后再出包。
-
-## 安装包大小说明
-
-- Godot 4.3 空工程的 APK 一般约 30–60MB（引擎本体随包分发，区别于老像素游戏只有几百 KB）。
-- 使用 AAB（Android App Bundle）+ 架构拆分（仅 arm64-v8a）可压缩到约 25–45MB，由 Google Play 按设备分发最小包。
-- 随着美术 / 音频资源增加体积会增长；当前色块占位阶段，体积接近空工程基线。
-
-## 运行
-
-1. 安装 [Godot 4.3](https://godotengine.org/download)
-2. 用 Godot 打开本目录 `project.godot`
-3. 按 F5 运行（主场景 `scenes/select.tscn`：选人 → 游戏）
-
-命令行无头运行（服务器/CI 验证）：
+推送到 `main` 自动执行：导入检查 → 50 项冒烟测试 → 安卓 APK 导出（debug 签名）并上传构建产物；
+打 `v*.*.*` tag 自动发布 GitHub Release 附带 APK。**本地无需任何打包环境。**
 
 ```bash
-godot --headless --path . --quit
+git push origin main          # 自动跑测试 + 出 APK 产物
+git tag v0.2.0 && git push origin v0.2.0   # 发布 Release
 ```
 
-## 目录结构
+## 🗓️ Roadmap
 
-```
-hot-blood-zombie/
-├── project.godot          # 工程配置（主场景 select.tscn，autoload：InputSetup/Economy/Achievements/CharacterData）
-├── icon.svg
-├── scenes/                # select / main / player / zombie / bullet / hud / touch_controls
-│                          # level1~3 / vehicle / grenade / item_pickup / shop
-│                          # achievement_panel / pause_menu / elite / boss
-├── scripts/
-│   ├── input_setup.gd     # autoload：代码注册输入映射
-│   ├── game.gd            # 波次生成、关卡推进、商店/成就/暂停接线、精英与 Boss 生成
-│   ├── player.gd          # 主角：移动/跳跃/射击/近战/必杀/受击/角色倍率注入/2P 人机 AI
-│   ├── zombie.gd          # 丧尸：三类 AI、吸血、躲避、包围、半尸化、收服求饶
-│   ├── enemy_defs.gd      # 能力值数据表（玩家 1 / 小怪 0.5 爆发 2~3 / 精英 4~4.5 / Boss 8.5、吸血率）
-│   ├── elite.gd           # 2 种精英（暴走族干部 / 丧尸屠夫）
-│   ├── boss.gd            # 街头混混头目：三阶段磨血战 + 弱点窗口
-│   ├── economy.gd         # Autoload：金币、黑市商店、技能书
-│   ├── achievements.gd    # Autoload：8 成就 + user:// 存档
-│   ├── character_data.gd  # Autoload：5 角色倍率
-│   ├── level_config.gd    # 3 关数据驱动配置
-│   ├── select.gd          # 选人界面（P2 固定电脑）
-│   ├── shop.gd / pause_menu.gd / achievement_panel.gd
-│   ├── bullet.gd / grenade.gd / vehicle.gd / item_pickup.gd / buff.gd / destructible.gd
-│   └── hud.gd             # HUD：血条/能量/弹药/金币/Boss 血条/结算
-├── tests/
-│   └── smoke.gd           # 冒烟测试（27 项断言，CI 与本地均可运行）
-├── docs/
-│   └── 热血物语末日丧尸_情报收集总报告.md  # 五线情报调研报告（UI/系统/开源/美术/氛围）
-├── .github/workflows/godot-ci.yml  # GitHub Actions：冒烟测试 + 安卓 APK 导出
-└── assets/                # 美术与音频占位（当前为程序化色块，可后续替换）
-```
+- [x] V1.0 首版内容：真实 HUD、2 头身角色、武器、首关、热血四特点
+- [x] V1.1 载具 / 收服 / 半尸化
+- [x] V1.2 选人 / 商店 / 三关 / 成就存档
+- [x] V1.3 怪物战斗深度：吸血、躲避、扛伤、精英、Boss 磨血战
+- [x] V2.0 白岳制药工厂 + 终章最终 Boss + DLC 注册表
+- [x] V2.1 热血化战斗：拳脚主力 + 日用品武器 + 敌人人味化
+- [x] V2.2 兄弟连携 + 根性気力 + 必杀个人武技 + 场景日常化
+- [x] V2.3 Boss 人形格斗战 + 2 头身视觉 + 格斗竞技场
+- [ ] 音效与 BGM（8-bit chiptune + 进行曲融合方向已定）
+- [ ] 更多关卡与 Boss、难度档位、评分挑战
 
-## 情报与设计文档
+## 📄 开源许可
 
-- 《热血物语：末日丧尸 游戏立项规划书》（飞书在线文档，含 HUD 布局示意与版本路线）
-- 《热血物语：末日丧尸 故事背景设定》（飞书在线文档，五章推进表）
-- 《热血物语：末日丧尸 内容框架与扩展性规划》（飞书在线文档，DLC 三层架构 + 数据外置清单）
-- 《热血物语：末日丧尸 情报收集总报告》：见 `docs/` 目录
+[MIT License](LICENSE) —— 免费开源，自由学习、修改、二创。游戏名与内容为原创致敬，不包含热血系列与合金弹头的任何商业素材。
 
-## 开发路线
-
-- V0.1 原型：核心循环可玩，色块占位
-- V0.3：安卓适配（触摸键位、6.9 寸横屏 UI、导出预设）
-- V1.0：真实 UI、原创角色动画、武器系统、首关场景、热血四特点（搞笑/格斗连击/物品互动/buff）
-- V1.1：载具、收服系统、半尸化变身、本地双人
-- V1.2：经济黑市、3 关卡、成就系统、移动端优化、选人环节
-- V1.3：怪物战斗深度（吸血、能力框架、躲避/扛伤/包围 AI、精英×2、Boss 磨血战、2P 纯 AI 人机）
-- V2.0：第四章白岳工厂 + 终章 Boss 战、DLC 注册表、GitHub 自动打包发布
-
-## 许可
-
-MIT License，见 [LICENSE](LICENSE)。
+**热血物语：末日丧尸** · 免费二创 · 用拳头和垃圾桶盖，打穿丧尸末日。
