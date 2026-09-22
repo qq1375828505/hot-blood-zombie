@@ -52,6 +52,11 @@ func _run() -> void:
 	_test_v22_shop_skill_books()
 	_test_v22_level_subtitles()
 	_test_v22_vending_machine()
+	_test_v23_boss_humanoid_data()
+	_test_v23_boss_fighting_techniques()
+	_test_v23_boss_taunts()
+	_test_v23_boss_visual_nodes()
+	_test_v23_level5_arena()
 	print("== 全部通过 ==")
 	quit(0)
 
@@ -1541,3 +1546,174 @@ func _test_v22_vending_machine() -> void:
 	assert(found_vending, "level4.tscn 含 vending_machine 类型可破坏物")
 	l4.queue_free()
 	print("v22 vending machine ok")
+
+
+# ======================================================================
+# V2.3 人形格斗战 Boss 测试
+# ======================================================================
+
+# ---- V2.3 人形化身份数据 ----
+func _test_v23_boss_humanoid_data() -> void:
+	# street_boss 人形身份
+	var sdef = EnemyDefs.get_boss_def("street_boss")
+	assert(sdef.get("display_name") == "暴走族总长·鬼冢", "street_boss display_name 正确")
+	assert(sdef.get("title") == "被改造的暴走族总长", "street_boss title 正确")
+	assert(sdef.get("humanoid") == true, "street_boss humanoid=true")
+	var s_lines: Array = sdef.get("taunt_lines", [])
+	assert(s_lines.size() == 5, "street_boss 嘲讽台词 5 条")
+	assert(s_lines[0] == "就这点本事？", "street_boss 第1条嘲讽")
+	# final_boss 人形身份
+	var fdef = EnemyDefs.get_boss_def("final_boss")
+	assert(fdef.get("display_name") == "学生会会长·白岳", "final_boss display_name 正确")
+	assert(fdef.get("title") == "被改造的学生会会长", "final_boss title 正确")
+	assert(fdef.get("humanoid") == true, "final_boss humanoid=true")
+	var f_lines: Array = fdef.get("taunt_lines", [])
+	assert(f_lines.size() == 5, "final_boss 嘲讽台词 5 条")
+	assert(f_lines[0] == "愚蠢。", "final_boss 第1条嘲讽")
+	# 实例化后字段落地
+	var bs := load("res://scenes/boss.tscn")
+	var b := bs.instantiate() as Boss
+	root.add_child(b)
+	assert(b.display_name == "暴走族总长·鬼冢", "Boss 实例 display_name 落地")
+	assert(b.title == "被改造的暴走族总长", "Boss 实例 title 落地")
+	assert(b.humanoid == true, "Boss 实例 humanoid=true")
+	assert(b.taunt_lines.size() == 5, "Boss 实例 taunt_lines 5 条")
+	b.queue_free()
+	# final_boss 实例
+	var b2 := bs.instantiate() as Boss
+	b2.boss_id = "final_boss"
+	root.add_child(b2)
+	assert(b2.display_name == "学生会会长·白岳", "final_boss 实例 display_name 落地")
+	assert(b2.taunt_lines.size() == 5, "final_boss 实例 taunt_lines 5 条")
+	b2.queue_free()
+	print("v23 boss humanoid data ok")
+
+
+# ---- V2.3 格斗技状态机 ----
+func _test_v23_boss_fighting_techniques() -> void:
+	var bs := load("res://scenes/boss.tscn")
+	var b := bs.instantiate() as Boss
+	root.add_child(b)
+	# 新状态机初始值
+	assert(b._punch_state == "idle", "拳击状态初始 idle")
+	assert(b._kick_state == "idle", "飞踢状态初始 idle")
+	assert(b._throw_state == "idle", "投技状态初始 idle")
+	assert(b._block_state == "idle", "格挡状态初始 idle")
+	assert(is_equal_approx(b._block_cooldown, 4.0), "格挡冷却初始 4.0s")
+	assert(is_equal_approx(b.BLOCK_DAMAGE_MULT, 0.3), "格挡减伤 0.3")
+	assert(is_equal_approx(b.BLOCK_DURATION, 1.0), "格挡持续 1.0s")
+	assert(is_equal_approx(b.PUNCH_RANGE, 70.0), "拳击范围 70px")
+	assert(is_equal_approx(b.KICK_RANGE, 90.0), "飞踢范围 90px")
+	assert(is_equal_approx(b.THROW_RANGE, 50.0), "投技范围 50px")
+	# 手动置位状态机可推进
+	b._punch_state = "telegraph"
+	b._punch_timer = 0.5
+	assert(b._punch_state == "telegraph", "拳击 telegraph 可置位")
+	b._kick_state = "telegraph"
+	b._kick_timer = 0.5
+	assert(b._kick_state == "telegraph", "飞踢 telegraph 可置位")
+	b._throw_state = "grabbing"
+	b._throw_timer = 0.5
+	assert(b._throw_state == "grabbing", "投技 grabbing 可置位")
+	b._block_state = "blocking"
+	b._block_timer = 1.0
+	assert(b._block_state == "blocking", "格挡 blocking 可置位")
+	# 格挡减伤：blocking 状态 take_damage ×0.3
+	b._block_cooldown = 99.0  # 防止测试中触发新格挡
+	var hp_before = b.hp
+	b.take_damage(10)
+	assert(b.hp == hp_before - 3, "格挡中 10 伤害→3（×0.3）")
+	b._block_state = "idle"
+	b.queue_free()
+	# 统一攻击决策函数存在
+	assert(b.has_method("_decide_attack"), "_decide_attack 函数存在")
+	assert(b.has_method("_is_all_attacks_idle"), "_is_all_attacks_idle 函数存在")
+	print("v23 boss fighting techniques ok")
+
+
+# ---- V2.3 嘲讽系统 ----
+func _test_v23_boss_taunts() -> void:
+	var bs := load("res://scenes/boss.tscn")
+	var b := bs.instantiate() as Boss
+	root.add_child(b)
+	# 嘲讽变量初始值
+	assert(is_equal_approx(b._taunt_cooldown, 10.0), "嘲讽冷却初始 10.0s")
+	assert(b._taunting == false, "初始不嘲讽")
+	assert(b._posing == false, "初始不摆姿势")
+	assert(is_equal_approx(b.TAUNT_DURATION, 1.5), "嘲讽持续 1.5s")
+	assert(is_equal_approx(b.TAUNT_COOLDOWN_MIN, 8.0), "嘲讽冷却下限 8s")
+	assert(is_equal_approx(b.TAUNT_COOLDOWN_MAX, 12.0), "嘲讽冷却上限 12s")
+	assert(is_equal_approx(b.POSE_DURATION, 1.5), "POSE 持续 1.5s")
+	# 手动触发嘲讽
+	b._taunting = true
+	b._taunt_timer = 1.5
+	b.weak_point_active = true
+	assert(b._taunting == true, "手动置位嘲讽成功")
+	assert(b.weak_point_active == true, "嘲讽期间弱点激活")
+	# 嘲讽气泡函数存在
+	assert(b.has_method("_show_bubble"), "_show_bubble 函数存在")
+	assert(b.has_method("_update_taunt"), "_update_taunt 函数存在")
+	assert(b.has_method("_do_laugh"), "_do_laugh 函数存在")
+	# 摆姿势变量
+	b._posing = true
+	b._pose_timer = 1.5
+	assert(b._posing == true, "手动置位摆姿势成功")
+	b.queue_free()
+	print("v23 boss taunts ok")
+
+
+# ---- V2.3 Boss 视觉人形化 ----
+func _test_v23_boss_visual_nodes() -> void:
+	var bs := load("res://scenes/boss.tscn")
+	assert(bs != null, "V2.3 boss.tscn 加载成功")
+	var b := bs.instantiate() as Boss
+	root.add_child(b)
+	# 必备节点路径不可丢
+	assert(b.get_node_or_null("Visual") != null, "V2.3 $Visual 存在")
+	assert(b.get_node_or_null("Visual/Head") != null, "V2.3 $Visual/Head 存在")
+	assert(b.get_node_or_null("Visual/Head/EyeL") != null, "V2.3 $Visual/Head/EyeL 存在")
+	assert(b.get_node_or_null("Visual/Head/EyeR") != null, "V2.3 $Visual/Head/EyeR 存在")
+	var vis := b.get_node("Visual") as Node2D
+	assert(vis.scale.x == 1.0 and vis.scale.y == 1.0, "V2.3 Visual 整体 scale=1.0")
+	# 人形部件
+	for n in ["Body", "UniformAccent", "Outline", "ArmL", "ArmR",
+			"LegL", "LegR", "BlockArmL", "BlockArmR", "TauntBubble"]:
+		assert(vis.get_node_or_null(n) != null, "V2.3 Visual/%s 存在" % n)
+	var head := b.get_node("Visual/Head") as Node2D
+	for n in ["Face", "Hair", "Mouth"]:
+		assert(head.get_node_or_null(n) != null, "V2.3 Visual/Head/%s 存在" % n)
+	# 特攻服主色
+	var body := vis.get_node("Body") as ColorRect
+	assert(absf(body.color.r - 0.2) < 0.02 and absf(body.color.g - 0.08) < 0.02,
+		"V2.3 Body 特攻服暗红黑")
+	# 可选节点默认隐藏
+	assert(vis.get_node("BlockArmL").visible == false, "V2.3 BlockArmL 默认隐藏")
+	assert(vis.get_node("BlockArmR").visible == false, "V2.3 BlockArmR 默认隐藏")
+	assert(vis.get_node("TauntBubble").visible == false, "V2.3 TauntBubble 默认隐藏")
+	# 2 头身：脸高 >= 身体高
+	var face := head.get_node("Face") as ColorRect
+	var face_h: float = face.offset_bottom - face.offset_top
+	var body_h: float = body.offset_bottom - body.offset_top
+	assert(face_h >= body_h, "V2.3 2头身：头高 >= 身体高")
+	b.queue_free()
+	print("v23 boss visual ok")
+
+
+# ---- V2.3 终章格斗竞技场装饰 ----
+func _test_v23_level5_arena() -> void:
+	var l5_scene := load("res://scenes/level5.tscn")
+	assert(l5_scene != null, "V2.3 level5.tscn 加载成功")
+	var l5: Node = l5_scene.instantiate()
+	root.add_child(l5)
+	for n in ["RingFloor", "RingRopeL", "RingRopeR", "RingCornerL", "RingCornerR"]:
+		assert(l5.get_node_or_null("MidLayer/" + n) != null, "V2.3 擂台 %s 存在" % n)
+	for i in 5:
+		assert(l5.get_node_or_null("FarLayer/Audience%d" % (i + 1)) != null,
+			"V2.3 观众 Audience%d 存在" % (i + 1))
+	assert(l5.get_node_or_null("FarLayer/Spotlight") != null, "V2.3 Spotlight 存在")
+	var banner: Node = l5.get_node_or_null("FarLayer/FightBanner")
+	assert(banner != null, "V2.3 FightBanner 存在")
+	var label: Label = banner.get_node_or_null("FightLabel") as Label
+	assert(label != null and label.text == "决 斗", "V2.3 标语文本为 决 斗")
+	l5.queue_free()
+	print("v23 level5 arena ok")

@@ -184,6 +184,11 @@ const BOSSES := {
 		"dash_range": 220.0,
 		"slam_radius": 130.0,
 		"slam_damage": 32,
+		# ---- V2.3 人形化身份 ----
+		"display_name": "暴走族总长·鬼冢",
+		"title": "被改造的暴走族总长",
+		"humanoid": true,
+		"taunt_lines": ["就这点本事？", "太弱了！", "哼，杂碎！", "给我跪下！", "老子可是总长！"],
 	},
 	"final_boss": {
 		"name": "白岳制药·究极改造体",
@@ -239,6 +244,11 @@ const BOSSES := {
 		"dash_range": 260.0,
 		"slam_radius": 150.0,
 		"slam_damage": 40,
+		# ---- V2.3 人形化身份 ----
+		"display_name": "学生会会长·白岳",
+		"title": "被改造的学生会会长",
+		"humanoid": true,
+		"taunt_lines": ["愚蠢。", "你不配站在我面前。", "秩序由我制定。", "跪下，庶民。", "这就是改造的力量。"],
 	},
 }
 

@@ -360,3 +360,104 @@ collision_mask = 0
 
 [node name="Shape" type="CollisionShape2D" parent="Boundaries/WallRight"]
 shape = SubResource("shape_wall")
+
+; ---- V2.3 格斗竞技场装饰（纯新增，不改现有节点；均属 decor 组，无碰撞）----
+
+; 擂台地面 + 围绳 + 角柱（MidLayer，z=-5）
+[node name="RingFloor" type="ColorRect" parent="MidLayer" groups=["decor"]]
+offset_left = 490.0
+offset_top = 476.0
+offset_right = 790.0
+offset_bottom = 484.0
+color = Color(0.6, 0.55, 0.5, 1)
+
+[node name="RingRopeL" type="ColorRect" parent="MidLayer" groups=["decor"]]
+offset_left = 488.0
+offset_top = 416.0
+offset_right = 490.0
+offset_bottom = 476.0
+color = Color(1, 1, 1, 0.85)
+
+[node name="RingRopeR" type="ColorRect" parent="MidLayer" groups=["decor"]]
+offset_left = 790.0
+offset_top = 416.0
+offset_right = 792.0
+offset_bottom = 476.0
+color = Color(1, 1, 1, 0.85)
+
+[node name="RingCornerL" type="ColorRect" parent="MidLayer" groups=["decor"]]
+offset_left = 484.0
+offset_top = 416.0
+offset_right = 488.0
+offset_bottom = 476.0
+color = Color(0.8, 0.1, 0.1, 1)
+
+[node name="RingCornerR" type="ColorRect" parent="MidLayer" groups=["decor"]]
+offset_left = 792.0
+offset_top = 416.0
+offset_right = 796.0
+offset_bottom = 476.0
+color = Color(0.8, 0.1, 0.1, 1)
+
+; 观众席剪影（FarLayer 背景层，z=-10）
+[node name="Audience1" type="ColorRect" parent="FarLayer" groups=["decor"]]
+offset_left = 300.0
+offset_top = 412.0
+offset_right = 312.0
+offset_bottom = 432.0
+color = Color(0.08, 0.08, 0.1, 0.8)
+
+[node name="Audience2" type="ColorRect" parent="FarLayer" groups=["decor"]]
+offset_left = 360.0
+offset_top = 400.0
+offset_right = 372.0
+offset_bottom = 432.0
+color = Color(0.08, 0.08, 0.1, 0.8)
+
+[node name="Audience3" type="ColorRect" parent="FarLayer" groups=["decor"]]
+offset_left = 420.0
+offset_top = 416.0
+offset_right = 432.0
+offset_bottom = 436.0
+color = Color(0.08, 0.08, 0.1, 0.8)
+
+[node name="Audience4" type="ColorRect" parent="FarLayer" groups=["decor"]]
+offset_left = 850.0
+offset_top = 406.0
+offset_right = 862.0
+offset_bottom = 426.0
+color = Color(0.08, 0.08, 0.1, 0.8)
+
+[node name="Audience5" type="ColorRect" parent="FarLayer" groups=["decor"]]
+offset_left = 905.0
+offset_top = 414.0
+offset_right = 917.0
+offset_bottom = 434.0
+color = Color(0.08, 0.08, 0.1, 0.8)
+
+; 聚光灯（FarLayer 最底层，半透明黄光柱）
+[node name="Spotlight" type="ColorRect" parent="FarLayer" groups=["decor"]]
+offset_left = 565.0
+offset_top = 0.0
+offset_right = 715.0
+offset_bottom = 200.0
+color = Color(1.0, 0.9, 0.5, 0.15)
+
+; 格斗标语横幅（FarLayer 后方上方）
+[node name="FightBanner" type="ColorRect" parent="FarLayer" groups=["decor"]]
+offset_left = 580.0
+offset_top = 50.0
+offset_right = 700.0
+offset_bottom = 70.0
+color = Color(0.3, 0.1, 0.1, 1)
+
+[node name="FightLabel" type="Label" parent="FarLayer/FightBanner" groups=["decor"]]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 120.0
+offset_bottom = 20.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "决 斗"
+horizontal_alignment = 1
+vertical_alignment = 1

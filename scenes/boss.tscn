@@ -15,94 +15,117 @@ shape = SubResource("RectangleShape2D_boss")
 
 [node name="Visual" type="Node2D" parent="."]
 
-[node name="Body" type="ColorRect" parent="Visual"]
-offset_left = -30.0
-offset_top = -70.0
-offset_right = 30.0
-offset_bottom = -26.0
-color = Color(0.12, 0.12, 0.18, 1)
+[node name="Outline" type="ColorRect" parent="Visual"]
+offset_left = -24.0
+offset_top = -49.0
+offset_right = 24.0
+offset_bottom = -17.0
+color = Color(0, 0, 0, 1)
 
-[node name="Belt" type="ColorRect" parent="Visual"]
-offset_left = -30.0
-offset_top = -32.0
-offset_right = 30.0
+[node name="Body" type="ColorRect" parent="Visual"]
+offset_left = -23.0
+offset_top = -48.0
+offset_right = 23.0
+offset_bottom = -18.0
+color = Color(0.2, 0.08, 0.08, 1)
+
+[node name="UniformAccent" type="ColorRect" parent="Visual"]
+offset_left = -23.0
+offset_top = -44.0
+offset_right = 23.0
+offset_bottom = -40.0
+color = Color(0.8, 0.2, 0.1, 1)
+
+[node name="ArmL" type="ColorRect" parent="Visual"]
+offset_left = -31.0
+offset_top = -46.0
+offset_right = -23.0
 offset_bottom = -26.0
-color = Color(0.85, 0.75, 0.25, 1)
+pivot_offset = Vector2(4, 0)
+color = Color(0.9, 0.75, 0.6, 1)
+
+[node name="ArmR" type="ColorRect" parent="Visual"]
+offset_left = 23.0
+offset_top = -46.0
+offset_right = 31.0
+offset_bottom = -26.0
+pivot_offset = Vector2(4, 0)
+color = Color(0.9, 0.75, 0.6, 1)
+
+[node name="LegL" type="ColorRect" parent="Visual"]
+offset_left = -16.0
+offset_top = -18.0
+offset_right = -6.0
+offset_bottom = 0.0
+color = Color(0.15, 0.1, 0.1, 1)
+
+[node name="LegR" type="ColorRect" parent="Visual"]
+offset_left = 6.0
+offset_top = -18.0
+offset_right = 16.0
+offset_bottom = 0.0
+color = Color(0.15, 0.1, 0.1, 1)
 
 [node name="Head" type="Node2D" parent="Visual"]
-position = Vector2(0, -88)
+position = Vector2(0, -72)
 
 [node name="Face" type="ColorRect" parent="Visual/Head"]
-offset_left = -22.0
-offset_top = -22.0
-offset_right = 22.0
-offset_bottom = 22.0
-color = Color(0.78, 0.62, 0.5, 1)
+offset_left = -25.0
+offset_top = -24.0
+offset_right = 25.0
+offset_bottom = 24.0
+color = Color(0.9, 0.75, 0.6, 1)
 
 [node name="Hair" type="ColorRect" parent="Visual/Head"]
-offset_left = -22.0
-offset_top = -26.0
-offset_right = 22.0
-offset_bottom = -12.0
-color = Color(1.0, 0.85, 0.2, 1)
+offset_left = -26.0
+offset_top = -34.0
+offset_right = 26.0
+offset_bottom = -14.0
+scale = Vector2(1, 1.4)
+pivot_offset = Vector2(26, 20)
+color = Color(0.85, 0.15, 0.1, 1)
 
 [node name="EyeL" type="ColorRect" parent="Visual/Head"]
-offset_left = -14.0
-offset_top = -8.0
-offset_right = -8.0
+offset_left = -13.0
+offset_top = -7.0
+offset_right = -7.0
 offset_bottom = -2.0
 color = Color(0.1, 0.1, 0.1, 1)
 
 [node name="EyeR" type="ColorRect" parent="Visual/Head"]
-offset_left = 8.0
-offset_top = -8.0
-offset_right = 14.0
+offset_left = 7.0
+offset_top = -7.0
+offset_right = 13.0
 offset_bottom = -2.0
 color = Color(0.1, 0.1, 0.1, 1)
 
 [node name="Mouth" type="ColorRect" parent="Visual/Head"]
-offset_left = -5.0
+offset_left = -3.0
 offset_top = 8.0
-offset_right = 5.0
-offset_bottom = 14.0
-color = Color(0.2, 0.08, 0.1, 1)
+offset_right = 3.0
+offset_bottom = 10.0
+color = Color(0.1, 0.05, 0.05, 1)
 
-[node name="ArmL" type="Node2D" parent="Visual"]
-position = Vector2(-30, -66)
+[node name="BlockArmL" type="ColorRect" parent="Visual"]
+offset_left = -22.0
+offset_top = -40.0
+offset_right = 0.0
+offset_bottom = -36.0
+color = Color(0.9, 0.75, 0.6, 1)
+visible = false
 
-[node name="ArmLRect" type="ColorRect" parent="Visual/ArmL"]
-offset_left = -6.0
-offset_top = 0.0
-offset_right = 6.0
-offset_bottom = 40.0
-color = Color(0.18, 0.18, 0.26, 1)
+[node name="BlockArmR" type="ColorRect" parent="Visual"]
+offset_left = 0.0
+offset_top = -40.0
+offset_right = 22.0
+offset_bottom = -36.0
+color = Color(0.9, 0.75, 0.6, 1)
+visible = false
 
-[node name="ArmR" type="Node2D" parent="Visual"]
-position = Vector2(30, -66)
-
-[node name="ArmRRect" type="ColorRect" parent="Visual/ArmR"]
-offset_left = -6.0
-offset_top = 0.0
-offset_right = 6.0
-offset_bottom = 40.0
-color = Color(0.18, 0.18, 0.26, 1)
-
-[node name="LegL" type="Node2D" parent="Visual"]
-position = Vector2(-12, -24)
-
-[node name="LegLRect" type="ColorRect" parent="Visual/LegL"]
-offset_left = -6.0
-offset_top = 0.0
-offset_right = 6.0
-offset_bottom = 24.0
-color = Color(0.15, 0.15, 0.2, 1)
-
-[node name="LegR" type="Node2D" parent="Visual"]
-position = Vector2(12, -24)
-
-[node name="LegRRect" type="ColorRect" parent="Visual/LegR"]
-offset_left = -6.0
-offset_top = 0.0
-offset_right = 6.0
-offset_bottom = 24.0
-color = Color(0.15, 0.15, 0.2, 1)
+[node name="TauntBubble" type="ColorRect" parent="Visual"]
+offset_left = -40.0
+offset_top = -130.0
+offset_right = 40.0
+offset_bottom = -108.0
+color = Color(0.95, 0.95, 0.95, 1)
+visible = false
