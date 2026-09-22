@@ -1,5 +1,6 @@
 extends Control
-# V1.4 角色选择界面：P1 选角色，P2 固定为电脑 AI 队友
+# V2.0 角色选择界面：暗灰废墟色调 + 白色像素标题 + 金色高亮选中
+# P1 选角色，P2 固定为电脑 AI 队友；卡片由 _build_cards() 程序化生成
 
 var current_selector: int = 1  # 始终为 P1
 
@@ -9,9 +10,14 @@ var current_selector: int = 1  # 始终为 P1
 @onready var start_button: Button = $BottomBar/StartButton
 @onready var subtitle: Label = $TitleBar/SubTitleLabel
 
-const CARD_SIZE := Vector2(200, 320)
+const CARD_SIZE := Vector2(210, 330)
 const BAR_MAX := 1.5  # 属性条满格对应倍率
 const BAR_FULL_WIDTH := 140.0
+
+const COL_GOLD := Color(1.0, 0.85, 0.30, 1)
+const COL_GOLD_GLOW := Color(1.0, 0.85, 0.30, 0.25)
+const COL_GRAY_BORDER := Color(0.30, 0.30, 0.32, 1)
+const COL_PANEL := Color(0.08, 0.08, 0.10, 1)
 
 
 func _ready() -> void:
@@ -37,54 +43,61 @@ func _build_cards() -> void:
 
 
 func _make_card(char_id: String, data: Dictionary) -> Control:
-	var card := PanelContainer.new()
-	card.custom_minimum_size = CARD_SIZE
-	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	# 外层包裹：负责外发光 + 黄色箭头（自包含，随选中态切换）
+	var outer := Control.new()
+	outer.custom_minimum_size = CARD_SIZE
+	outer.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	outer.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
+	# 外发光（默认透明）
+	var glow := ColorRect.new()
+	glow.set_anchors_preset(Control.PRESET_FULL_RECT)
+	glow.offset_left = -8
+	glow.offset_top = -8
+	glow.offset_right = 8
+	glow.offset_bottom = 8
+	glow.color = Color(1.0, 0.85, 0.30, 0.0)
+	outer.add_child(glow)
+
+	# 卡片面板
+	var card := PanelContainer.new()
+	card.set_anchors_preset(Control.PRESET_FULL_RECT)
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.05, 0.08, 1)
-	style.border_color = Color(1, 0.2, 0.6, 1)  # 洋红边框
-	style.set_border_width_all(3)
-	style.set_content_margin_all(8)
+	style.bg_color = COL_PANEL
+	style.border_color = COL_GRAY_BORDER
+	style.set_border_width_all(2)
+	style.set_content_margin_all(10)
 	card.add_theme_stylebox_override("panel", style)
+	outer.add_child(card)
 
 	var vbox := VBoxContainer.new()
 	vbox.alignment = VBoxContainer.ALIGNMENT_CENTER
 	vbox.add_theme_constant_override("separation", 6)
 	card.add_child(vbox)
 
-	# 头像色块（带角色名首字）
+	# 像素头像（用 ColorRect 拼出简化半身像）
 	var avatar_wrap := CenterContainer.new()
 	vbox.add_child(avatar_wrap)
-	var avatar := ColorRect.new()
-	avatar.color = data.get("color", Color.WHITE)
-	avatar.custom_minimum_size = Vector2(96, 96)
-	avatar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	avatar_wrap.add_child(avatar)
-	var avatar_label := Label.new()
-	avatar_label.text = str(data.get("name", "?")).substr(0, 1)
-	avatar_label.add_theme_font_size_override("font_size", 48)
-	avatar_label.add_theme_color_override("font_color", Color(0, 0, 0, 1))
-	avatar_label.set_anchors_preset(Control.PRESET_CENTER)
-	avatar.add_child(avatar_label)
+	avatar_wrap.add_child(_make_pixel_avatar(data))
 
 	# 角色名
 	var name_lbl := Label.new()
 	name_lbl.text = data.get("name", "?")
-	name_lbl.add_theme_font_size_override("font_size", 20)
+	name_lbl.add_theme_font_size_override("font_size", 24)
 	name_lbl.add_theme_color_override("font_color", Color.WHITE)
+	name_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	name_lbl.add_theme_constant_override("outline_size", 4)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
 	vbox.add_child(name_lbl)
 
 	# 描述
 	var desc_lbl := Label.new()
 	desc_lbl.text = data.get("desc", "")
-	desc_lbl.add_theme_font_size_override("font_size", 13)
-	desc_lbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.78, 1))
+	desc_lbl.add_theme_font_size_override("font_size", 12)
+	desc_lbl.add_theme_color_override("font_color", Color(0.72, 0.72, 0.75, 1))
 	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc_lbl.custom_minimum_size = Vector2(180, 50)
+	desc_lbl.custom_minimum_size = Vector2(185, 38)
 	vbox.add_child(desc_lbl)
 
 	# 属性条
@@ -101,9 +114,98 @@ func _make_card(char_id: String, data: Dictionary) -> Control:
 	btn.pressed.connect(_on_select.bind(char_id))
 	vbox.add_child(btn)
 
-	card.set_meta("char_id", char_id)
-	card.set_meta("select_button", btn)
-	return card
+	# 选中指示箭头（黄色三角形，指向右侧；仅选中时显示）
+	var arrow := Polygon2D.new()
+	arrow.color = COL_GOLD
+	arrow.polygon = PackedVector2Array([Vector2(0, 0), Vector2(22, 14), Vector2(0, 28)])
+	arrow.position = Vector2(CARD_SIZE.x - 4, CARD_SIZE.y / 2.0 - 14)
+	arrow.visible = false
+	outer.add_child(arrow)
+
+	outer.set_meta("char_id", char_id)
+	outer.set_meta("card_panel", card)
+	outer.set_meta("glow", glow)
+	outer.set_meta("arrow", arrow)
+	outer.set_meta("select_button", btn)
+	return outer
+
+
+# 用 ColorRect 拼一个简化像素半身像：肤色 + 头发 + 角色主色躯干
+func _make_pixel_avatar(data: Dictionary) -> Control:
+	var box := Control.new()
+	box.custom_minimum_size = Vector2(130, 130)
+	var skin := Color(0.95, 0.80, 0.62)
+	var hair := Color(0.08, 0.08, 0.10)
+	var torso: Color = data.get("color", Color.WHITE)
+
+	var bg := ColorRect.new()
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.color = Color(0.05, 0.05, 0.07, 1)
+	box.add_child(bg)
+
+	# 躯干/肩膀（角色主色）
+	var body := ColorRect.new()
+	body.offset_left = 16
+	body.offset_top = 80
+	body.offset_right = 114
+	body.offset_bottom = 130
+	body.color = torso
+	box.add_child(body)
+
+	# 立领
+	var collar := ColorRect.new()
+	collar.offset_left = 52
+	collar.offset_top = 80
+	collar.offset_right = 78
+	collar.offset_bottom = 94
+	collar.color = Color(0.12, 0.12, 0.14, 1)
+	box.add_child(collar)
+
+	# 脖子
+	var neck := ColorRect.new()
+	neck.offset_left = 56
+	neck.offset_top = 68
+	neck.offset_right = 74
+	neck.offset_bottom = 84
+	neck.color = skin.darkened(0.08)
+	box.add_child(neck)
+
+	# 脸
+	var face := ColorRect.new()
+	face.offset_left = 44
+	face.offset_top = 30
+	face.offset_right = 86
+	face.offset_bottom = 74
+	face.color = skin
+	box.add_child(face)
+
+	# 头发
+	var hair_rect := ColorRect.new()
+	hair_rect.offset_left = 40
+	hair_rect.offset_top = 18
+	hair_rect.offset_right = 90
+	hair_rect.offset_bottom = 42
+	hair_rect.color = hair
+	box.add_child(hair_rect)
+
+	# 眼睛
+	var eye_l := ColorRect.new()
+	eye_l.offset_left = 52
+	eye_l.offset_top = 48
+	eye_l.offset_right = 58
+	eye_l.offset_bottom = 54
+	eye_l.color = Color(0.08, 0.06, 0.06, 1)
+	box.add_child(eye_l)
+
+	var eye_r := ColorRect.new()
+	eye_r.offset_left = 72
+	eye_r.offset_top = 48
+	eye_r.offset_right = 78
+	eye_r.offset_bottom = 54
+	eye_r.color = Color(0.08, 0.06, 0.06, 1)
+	box.add_child(eye_r)
+
+	return box
 
 
 func _make_stat_bar(label_text: String, mult: float, bar_color: Color) -> Control:
@@ -161,16 +263,24 @@ func _mark_all_cards() -> void:
 
 
 func _mark_card(card: Control, char_id: String) -> void:
-	if not card.has_theme_stylebox_override("panel"):
+	var panel := card.get_meta("card_panel", null) as PanelContainer
+	if panel == null:
 		return
-	var st := card.get_theme_stylebox("panel") as StyleBoxFlat
-	if st == null:
-		return
+	var st := panel.get_theme_stylebox("panel") as StyleBoxFlat
+	var glow := card.get_meta("glow", null) as ColorRect
+	var arrow := card.get_meta("arrow", null) as Polygon2D
 	var is_p1 := CharacterData.selected_p1 == char_id
-	if is_p1:
-		st.border_color = Color(1, 0.85, 0.2, 1)  # P1：黄色
-	else:
-		st.border_color = Color(1, 0.2, 0.6, 1)  # 未选中：洋红
+	if st != null:
+		if is_p1:
+			st.border_color = COL_GOLD
+			st.set_border_width_all(5)
+		else:
+			st.border_color = COL_GRAY_BORDER
+			st.set_border_width_all(2)
+	if glow != null:
+		glow.color = COL_GOLD_GLOW if is_p1 else Color(1.0, 0.85, 0.30, 0.0)
+	if arrow != null:
+		arrow.visible = is_p1
 
 
 func _on_start() -> void:

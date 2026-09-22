@@ -1,6 +1,62 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/touch_controls.gd" id="1_tc"]
+
+[sub_resource type="StyleBoxFlat" id="sb_pad"]
+bg_color = Color(0.9, 0.9, 0.95, 0.6)
+corner_radius_top_left = 85
+corner_radius_top_right = 85
+corner_radius_bottom_right = 85
+corner_radius_bottom_left = 85
+
+[sub_resource type="StyleBoxFlat" id="sb_knob"]
+bg_color = Color(1, 1, 1, 0.7)
+corner_radius_top_left = 42
+corner_radius_top_right = 42
+corner_radius_bottom_right = 42
+corner_radius_bottom_left = 42
+
+[sub_resource type="StyleBoxFlat" id="sb_lg"]
+bg_color = Color(0.85, 0.15, 0.15, 0.85)
+corner_radius_top_left = 60
+corner_radius_top_right = 60
+corner_radius_bottom_right = 60
+corner_radius_bottom_left = 60
+
+[sub_resource type="StyleBoxFlat" id="sb_md"]
+bg_color = Color(0.2, 0.45, 0.85, 0.85)
+corner_radius_top_left = 48
+corner_radius_top_right = 48
+corner_radius_bottom_right = 48
+corner_radius_bottom_left = 48
+
+[sub_resource type="StyleBoxFlat" id="sb_sm"]
+bg_color = Color(0.92, 0.92, 0.95, 0.8)
+corner_radius_top_left = 44
+corner_radius_top_right = 44
+corner_radius_bottom_right = 44
+corner_radius_bottom_left = 44
+
+[sub_resource type="StyleBoxFlat" id="sb_xs"]
+bg_color = Color(0.85, 0.85, 0.9, 0.5)
+corner_radius_top_left = 32
+corner_radius_top_right = 32
+corner_radius_bottom_right = 32
+corner_radius_bottom_left = 32
+
+[sub_resource type="StyleBoxFlat" id="sb_tiny"]
+bg_color = Color(0.25, 0.25, 0.3, 0.5)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+
+[sub_resource type="StyleBoxFlat" id="sb_group"]
+bg_color = Color(0.2, 0.2, 0.25, 0.5)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
 
 [node name="TouchControls" type="CanvasLayer"]
 script = ExtResource("1_tc")
@@ -8,60 +64,64 @@ script = ExtResource("1_tc")
 [node name="JoyArea" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 2
-anchor_left = 0.0
 anchor_top = 1.0
-anchor_right = 0.0
 anchor_bottom = 1.0
-offset_left = 36.0
-offset_top = -236.0
-offset_right = 236.0
-offset_bottom = -36.0
+offset_left = 44.0
+offset_top = -224.0
+offset_right = 224.0
+offset_bottom = -44.0
 mouse_filter = 2
 
-[node name="JoyBase" type="ColorRect" parent="JoyArea"]
-visible = false
+[node name="JoyBase" type="Panel" parent="JoyArea"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -60.0
-offset_top = -60.0
-offset_right = 60.0
-offset_bottom = 60.0
+offset_left = -85.0
+offset_top = -85.0
+offset_right = 85.0
+offset_bottom = 85.0
 mouse_filter = 2
-color = Color(0.22, 0.22, 0.28, 0.55)
+theme_override_styles/panel = SubResource("sb_pad")
 
-[node name="JoyKnob" type="ColorRect" parent="JoyArea/JoyBase"]
-layout_mode = 0
-offset_left = 30.0
-offset_top = 30.0
-offset_right = 90.0
-offset_bottom = 90.0
+[node name="JoyKnob" type="Panel" parent="JoyArea/JoyBase"]
+layout_mode = 1
+offset_left = 43.0
+offset_top = 43.0
+offset_right = 127.0
+offset_bottom = 127.0
 mouse_filter = 2
-color = Color(0.55, 0.55, 0.65, 0.95)
+theme_override_styles/panel = SubResource("sb_knob")
 
-[node name="BtnShoot" type="Control" parent="."]
+[node name="ActionGroup" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -140.0
-offset_top = -140.0
-offset_right = -28.0
-offset_bottom = -28.0
+offset_left = -400.0
+offset_top = -300.0
+offset_right = -20.0
+offset_bottom = -20.0
 mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_group")
 
-[node name="Bg" type="ColorRect" parent="BtnShoot"]
+[node name="BtnShoot" type="Panel" parent="."]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -156.0
+offset_top = -156.0
+offset_right = -36.0
+offset_bottom = -36.0
 mouse_filter = 2
-color = Color(0.62, 0.16, 0.16, 0.92)
+theme_override_styles/panel = SubResource("sb_lg")
 
 [node name="Label" type="Label" parent="BtnShoot"]
 layout_mode = 1
@@ -70,37 +130,30 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -50.0
-offset_top = -17.0
-offset_right = 50.0
-offset_bottom = 17.0
+offset_left = -30.0
+offset_top = -26.0
+offset_right = 30.0
+offset_bottom = 26.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 26
-text = "射击"
+theme_override_font_sizes/font_size = 40
+text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BtnJump" type="Control" parent="."]
+[node name="BtnJump" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -130.0
-offset_top = -252.0
-offset_right = -38.0
-offset_bottom = -160.0
+offset_left = -268.0
+offset_top = -268.0
+offset_right = -172.0
+offset_bottom = -172.0
 mouse_filter = 2
-
-[node name="Bg" type="ColorRect" parent="BtnJump"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(0.18, 0.18, 0.22, 0.82)
+theme_override_styles/panel = SubResource("sb_md")
 
 [node name="Label" type="Label" parent="BtnJump"]
 layout_mode = 1
@@ -109,76 +162,30 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -40.0
-offset_top = -15.0
-offset_right = 40.0
-offset_bottom = 15.0
+offset_left = -24.0
+offset_top = -20.0
+offset_right = 24.0
+offset_bottom = 20.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 22
-text = "跳跃"
+theme_override_font_sizes/font_size = 30
+text = "B"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BtnMelee" type="Control" parent="."]
+[node name="BtnSpecial" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -230.0
-offset_top = -118.0
-offset_right = -150.0
-offset_bottom = -38.0
+offset_left = -138.0
+offset_top = -288.0
+offset_right = -42.0
+offset_bottom = -192.0
 mouse_filter = 2
-
-[node name="Bg" type="ColorRect" parent="BtnMelee"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(0.18, 0.18, 0.22, 0.82)
-
-[node name="Label" type="Label" parent="BtnMelee"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -36.0
-offset_top = -14.0
-offset_right = 36.0
-offset_bottom = 14.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "近战"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BtnSpecial" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -230.0
-offset_top = -220.0
-offset_right = -150.0
-offset_bottom = -140.0
-mouse_filter = 2
-
-[node name="Bg" type="ColorRect" parent="BtnSpecial"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(0.18, 0.18, 0.22, 0.82)
+theme_override_styles/panel = SubResource("sb_md")
 
 [node name="Label" type="Label" parent="BtnSpecial"]
 layout_mode = 1
@@ -187,37 +194,58 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -36.0
-offset_top = -14.0
-offset_right = 36.0
-offset_bottom = 14.0
+offset_left = -24.0
+offset_top = -20.0
+offset_right = 24.0
+offset_bottom = 20.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "必杀"
+theme_override_colors/font_color = Color(0.2, 0.2, 0.1, 1)
+theme_override_font_sizes/font_size = 30
+text = "C"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BtnCrouch" type="Control" parent="."]
+[node name="BtnMelee" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -230.0
-offset_top = -320.0
-offset_right = -150.0
-offset_bottom = -240.0
+offset_left = -384.0
+offset_top = -204.0
+offset_right = -296.0
+offset_bottom = -116.0
 mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_sm")
 
-[node name="Bg" type="ColorRect" parent="BtnCrouch"]
+[node name="Label" type="Label" parent="BtnMelee"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -22.0
+offset_top = -18.0
+offset_right = 22.0
+offset_bottom = 18.0
 mouse_filter = 2
-color = Color(0.18, 0.18, 0.22, 0.82)
+theme_override_colors/font_color = Color(0.3, 0.3, 0.35, 1)
+theme_override_font_sizes/font_size = 26
+text = "B"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnCrouch" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 44.0
+offset_top = 84.0
+offset_right = 108.0
+offset_bottom = 148.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_xs")
 
 [node name="Label" type="Label" parent="BtnCrouch"]
 layout_mode = 1
@@ -226,154 +254,29 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -36.0
-offset_top = -14.0
-offset_right = 36.0
-offset_bottom = 14.0
+offset_left = -20.0
+offset_top = -16.0
+offset_right = 20.0
+offset_bottom = 16.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "下蹲"
+theme_override_font_sizes/font_size = 24
+text = "↓"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BtnRestart" type="Control" parent="."]
+[node name="BtnInteract" type="Panel" parent="."]
 layout_mode = 1
-anchors_preset = 1
 anchor_left = 1.0
-anchor_top = 0.0
-anchor_right = 1.0
-anchor_bottom = 0.0
-offset_left = -84.0
-offset_top = 56.0
-offset_right = -24.0
-offset_bottom = 116.0
-mouse_filter = 2
-
-[node name="Bg" type="ColorRect" parent="BtnRestart"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(0.18, 0.18, 0.22, 0.82)
-
-[node name="Label" type="Label" parent="BtnRestart"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
 anchor_top = 0.5
-anchor_right = 0.5
+anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -30.0
-offset_top = -12.0
-offset_right = 30.0
-offset_bottom = 12.0
+offset_left = -90.0
+offset_top = -34.0
+offset_right = -26.0
+offset_bottom = 30.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
-theme_override_font_sizes/font_size = 16
-text = "重开"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BtnShop" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_top = 0.0
-anchor_right = 1.0
-anchor_bottom = 0.0
-offset_left = -160.0
-offset_top = 56.0
-offset_right = -96.0
-offset_bottom = 120.0
-mouse_filter = 2
-
-[node name="Bg" type="ColorRect" parent="BtnShop"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(0.18, 0.18, 0.22, 0.82)
-
-[node name="Label" type="Label" parent="BtnShop"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -32.0
-offset_top = -12.0
-offset_right = 32.0
-offset_bottom = 12.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
-theme_override_font_sizes/font_size = 16
-text = "$"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BtnPause" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_top = 0.0
-anchor_right = 1.0
-anchor_bottom = 0.0
-offset_left = -70.0
-offset_top = 56.0
-offset_right = -14.0
-offset_bottom = 112.0
-mouse_filter = 2
-
-[node name="Bg" type="ColorRect" parent="BtnPause"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(0.18, 0.18, 0.22, 0.82)
-
-[node name="Label" type="Label" parent="BtnPause"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -28.0
-offset_top = -12.0
-offset_right = 28.0
-offset_bottom = 12.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 18
-text = "II"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BtnInteract" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -320.0
-offset_top = -110.0
-offset_right = -248.0
-offset_bottom = -38.0
-mouse_filter = 2
-
-[node name="Bg" type="ColorRect" parent="BtnInteract"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
-color = Color(0.18, 0.18, 0.22, 0.82)
+theme_override_styles/panel = SubResource("sb_xs")
 
 [node name="Label" type="Label" parent="BtnInteract"]
 layout_mode = 1
@@ -382,13 +285,103 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -36.0
-offset_top = -12.0
-offset_right = 36.0
-offset_bottom = 12.0
+offset_left = -20.0
+offset_top = -16.0
+offset_right = 20.0
+offset_bottom = 16.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.4, 0.9, 0.95, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 20
 text = "互"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnShop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -172.0
+offset_top = 66.0
+offset_right = -106.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_tiny")
+
+[node name="Label" type="Label" parent="BtnShop"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -24.0
+offset_top = -14.0
+offset_right = 24.0
+offset_bottom = 14.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 22
+text = "$"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnPause" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -98.0
+offset_top = 66.0
+offset_right = -32.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_tiny")
+
+[node name="Label" type="Label" parent="BtnPause"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -14.0
+offset_right = 20.0
+offset_bottom = 14.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "II"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnRestart" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -172.0
+offset_top = 138.0
+offset_right = -108.0
+offset_bottom = 200.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_tiny")
+
+[node name="Label" type="Label" parent="BtnRestart"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -24.0
+offset_top = -13.0
+offset_right = 24.0
+offset_bottom = 13.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+text = "重开"
 horizontal_alignment = 1
 vertical_alignment = 1

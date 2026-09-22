@@ -1,36 +1,38 @@
 extends CanvasLayer
-# 移动端触摸控件：左下角虚拟摇杆 + 右下角动作按钮群。
-# 仅在具备触摸屏的设备上显示；桌面端自动隐藏，不影响键鼠操作。
+# 移动端触摸控件 V2.0：左下角常驻半透明大摇杆 + 右下角 ABC 大圆按钮组（王者荣耀风）。
 # 通过 Input.action_press / Input.action_release 驱动已注册输入动作。
+# 按钮为 Panel + StyleBoxFlat（corner_radius 做圆），按下时提亮。
 
-const DEAD_ZONE := 15.0          # 摇杆水平死区（像素），超过才触发方向
-const KNOB_RADIUS := 52.0        # 摇杆头最大拖动半径（像素）
-const NORMAL_BG := Color(0.18, 0.18, 0.22, 0.82)
-const PRESSED_BG := Color(0.48, 0.48, 0.58, 0.95)
-const SHOOT_BG := Color(0.62, 0.16, 0.16, 0.92)
-const SHOOT_PRESSED := Color(0.9, 0.32, 0.32, 1.0)
-const BASE_BG := Color(0.22, 0.22, 0.28, 0.55)
-const KNOB_BG := Color(0.55, 0.55, 0.65, 0.95)
+const DEAD_ZONE := 15.0
+const KNOB_RADIUS := 55.0
+
+# 各按钮正常/按下配色（按下提亮 + 提高不透明度）
+const SHOOT_NORMAL := Color(0.85, 0.15, 0.15, 0.85)
+const SHOOT_PRESSED := Color(1.0, 0.38, 0.38, 1.0)
+const JUMP_NORMAL := Color(0.2, 0.45, 0.85, 0.85)
+const JUMP_PRESSED := Color(0.4, 0.65, 1.0, 1.0)
+const SPECIAL_NORMAL := Color(0.95, 0.75, 0.15, 0.85)
+const SPECIAL_PRESSED := Color(1.0, 0.9, 0.35, 1.0)
+const WHITE_NORMAL := Color(0.92, 0.92, 0.95, 0.8)
+const WHITE_PRESSED := Color(1.0, 1.0, 1.0, 0.95)
+const SMALL_NORMAL := Color(0.85, 0.85, 0.9, 0.5)
+const SMALL_PRESSED := Color(0.95, 0.95, 1.0, 0.85)
+const CUSTOM_NORMAL := Color(0.25, 0.25, 0.3, 0.5)
+const CUSTOM_PRESSED := Color(0.45, 0.45, 0.55, 0.85)
 
 var joy_area: Control
-var joy_base: ColorRect
-var joy_knob: ColorRect
+var joy_base: Panel
+var joy_knob: Panel
 var joy_index := -1
-var joy_h_dir := ""              # "", "left", "right"
+var joy_h_dir := ""
 var buttons: Dictionary = {}
-
-# ---- V1.2 追加：自定义按钮（商店/暂停），不映射 Input 动作，直接调用 game 节点 ----
 var custom_buttons: Dictionary = {}
 
-# ---- V1.2 P2 触摸双人（可选，预留接口）----
-# V1.2 不实现完整 P2 触摸布局（需第二套摇杆+按钮，屏占比复杂），仅预留开关变量。
-# 桌面端 P2 仍使用小键盘键位（V1.1 已实现），不受影响。P2 触摸布局留作后续扩展。
 var p2_touch_enabled: bool = false
 
 
 func _ready() -> void:
 	var show_touch := OS.has_feature("mobile")
-	# 进一步检测触摸屏能力（桌面接外接触屏时也启用）
 	if DisplayServer.is_touchscreen_available():
 		show_touch = true
 	if not show_touch:
@@ -40,43 +42,54 @@ func _ready() -> void:
 	joy_area = $JoyArea
 	joy_base = $JoyArea/JoyBase
 	joy_knob = $JoyArea/JoyBase/JoyKnob
-	joy_base.visible = false
-	joy_base.color = BASE_BG
-	joy_knob.color = KNOB_BG
+	# 摇杆始终可见（不再触摸时才显示）
+	joy_base.visible = true
 
-	_register_button("BtnShoot", "shoot", SHOOT_BG, SHOOT_PRESSED)
-	_register_button("BtnJump", "jump", NORMAL_BG, PRESSED_BG)
-	_register_button("BtnMelee", "melee", NORMAL_BG, PRESSED_BG)
-	_register_button("BtnSpecial", "special", NORMAL_BG, PRESSED_BG)
-	_register_button("BtnCrouch", "crouch", NORMAL_BG, PRESSED_BG)
-	_register_button("BtnRestart", "restart", NORMAL_BG, PRESSED_BG)
+	_register_button("BtnShoot", "shoot", SHOOT_NORMAL, SHOOT_PRESSED)
+	_register_button("BtnJump", "jump", JUMP_NORMAL, JUMP_PRESSED)
+	_register_button("BtnMelee", "melee", WHITE_NORMAL, WHITE_PRESSED)
+	_register_button("BtnSpecial", "special", SPECIAL_NORMAL, SPECIAL_PRESSED)
+	_register_button("BtnCrouch", "crouch", SMALL_NORMAL, SMALL_PRESSED)
+	_register_button("BtnRestart", "restart", CUSTOM_NORMAL, CUSTOM_PRESSED)
 
-	# ---- V1.2 追加：互动键复用 crouch 动作（载具上下车/收服求饶丧尸/拾取）----
-	_register_button("BtnInteract", "crouch", NORMAL_BG, PRESSED_BG)
-	# ---- V1.2 追加：商店键 / 暂停键（不映射 Input 动作，按下直接调用 game 函数）----
+	# 互动键复用 crouch 动作
+	_register_button("BtnInteract", "crouch", SMALL_NORMAL, SMALL_PRESSED)
+	# 商店 / 暂停（自定义回调）
 	_register_custom_button("BtnShop", "shop")
 	_register_custom_button("BtnPause", "pause")
 
 
-# ---- V1.2 追加：注册不映射 Input 动作的自定义触摸按钮（商店/暂停）----
-func _register_custom_button(node_name: String, kind: String) -> void:
-	var n := get_node_or_null(node_name)
-	if n == null:
-		return
-	var bg := n.get_node_or_null("Bg") as ColorRect
-	custom_buttons[n] = { "kind": kind, "index": -1, "bg": bg, "normal": NORMAL_BG, "pressed": PRESSED_BG }
-	if bg:
-		bg.color = NORMAL_BG
+# 把按钮 Panel 的共享 stylebox 复制成独立实例，避免按一个按钮污染其它。
+func _make_unique_style(node: Node) -> StyleBoxFlat:
+	var panel := node as Panel
+	if panel == null:
+		return null
+	var sb := panel.get_theme_stylebox("panel") as StyleBoxFlat
+	if sb == null:
+		return null
+	var dup := sb.duplicate() as StyleBoxFlat
+	panel.add_theme_stylebox_override("panel", dup)
+	return dup
 
 
 func _register_button(node_name: String, action: String, normal: Color, pressed: Color) -> void:
 	var n := get_node_or_null(node_name)
 	if n == null:
 		return
-	var bg := n.get_node_or_null("Bg") as ColorRect
-	buttons[n] = { "action": action, "index": -1, "bg": bg, "normal": normal, "pressed": pressed }
-	if bg:
-		bg.color = normal
+	var sb := _make_unique_style(n)
+	if sb:
+		sb.bg_color = normal
+	buttons[n] = { "action": action, "index": -1, "style": sb, "normal": normal, "pressed": pressed }
+
+
+func _register_custom_button(node_name: String, kind: String) -> void:
+	var n := get_node_or_null(node_name)
+	if n == null:
+		return
+	var sb := _make_unique_style(n)
+	if sb:
+		sb.bg_color = CUSTOM_NORMAL
+	custom_buttons[n] = { "kind": kind, "index": -1, "style": sb, "normal": CUSTOM_NORMAL, "pressed": CUSTOM_PRESSED }
 
 
 func _input(event: InputEvent) -> void:
@@ -92,7 +105,6 @@ func _touch(ev: InputEventScreenTouch) -> void:
 	if ev.pressed:
 		if joy_index == -1 and joy_area.get_global_rect().has_point(ev.position):
 			joy_index = ev.index
-			joy_base.visible = true
 			_move_knob(ev.position)
 			return
 		for b in buttons:
@@ -100,9 +112,8 @@ func _touch(ev: InputEventScreenTouch) -> void:
 			if info["index"] == -1 and b.get_global_rect().has_point(ev.position):
 				info["index"] = ev.index
 				Input.action_press(info["action"])
-				if info["bg"]:
-					info["bg"].color = info["pressed"]
-				# restart：仅在结算界面显示时直接重开，避免误触打断正常游戏
+				if info["style"]:
+					info["style"].bg_color = info["pressed"]
 				if info["action"] == "restart" and _is_game_over():
 					get_tree().reload_current_scene()
 				return
@@ -115,18 +126,18 @@ func _touch(ev: InputEventScreenTouch) -> void:
 			if info["index"] == ev.index:
 				Input.action_release(info["action"])
 				info["index"] = -1
-				if info["bg"]:
-					info["bg"].color = info["normal"]
+				if info["style"]:
+					info["style"].bg_color = info["normal"]
 				return
 
-	# ---- V1.2 追加：自定义按钮（商店/暂停）独立多点触控跟踪，可与摇杆/其他键同时按下 ----
+	# 自定义按钮（商店/暂停）
 	if ev.pressed:
 		for b in custom_buttons:
 			var info: Dictionary = custom_buttons[b]
 			if info["index"] == -1 and b.get_global_rect().has_point(ev.position):
 				info["index"] = ev.index
-				if info["bg"]:
-					info["bg"].color = info["pressed"]
+				if info["style"]:
+					info["style"].bg_color = info["pressed"]
 				_on_custom_button_pressed(info["kind"])
 				return
 	else:
@@ -134,12 +145,11 @@ func _touch(ev: InputEventScreenTouch) -> void:
 			var info: Dictionary = custom_buttons[b]
 			if info["index"] == ev.index:
 				info["index"] = -1
-				if info["bg"]:
-					info["bg"].color = info["normal"]
+				if info["style"]:
+					info["style"].bg_color = info["normal"]
 				return
 
 
-# ---- V1.2 追加：自定义按钮按下回调（商店开关 / 暂停菜单开关），找不到 game 节点不报错 ----
 func _on_custom_button_pressed(kind: String) -> void:
 	var g := _find_game()
 	if g == null:
@@ -150,7 +160,6 @@ func _on_custom_button_pressed(kind: String) -> void:
 		g.toggle_pause()
 
 
-# ---- V1.2 追加：查找游戏主节点（当前场景根即 Game），找不到返回 null ----
 func _find_game() -> Node:
 	var cs := get_tree().current_scene
 	if cs and (cs.has_method("_toggle_shop") or cs.has_method("toggle_pause")):
@@ -187,7 +196,7 @@ func _move_knob(world_pos: Vector2) -> void:
 func _release_joy() -> void:
 	_release_h_dir()
 	joy_index = -1
-	joy_base.visible = false
+	# 摇杆底座常驻：只复位 knob，不隐藏
 	joy_knob.position = joy_base.size * 0.5 - joy_knob.size * 0.5
 
 

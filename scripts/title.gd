@@ -1,6 +1,5 @@
 extends Control
-# 开场标题画面：还原 FC 热血系列开场
-# 浅蓝天空 + 白色城市剪影 + 绿草地 + 粉红"热血"大字 + 闪烁 PRESS START
+# 开场标题画面：暗灰废墟 + 白色"热血" + 金色"末日丧尸" + 闪烁 PRESS START
 
 @onready var press_label: Label = $PressLabel
 @onready var title_red: Label = $TitleLayer/TitleRed
