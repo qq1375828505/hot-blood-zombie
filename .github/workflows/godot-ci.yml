@@ -88,6 +88,8 @@ jobs:
           printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nandroid/java_sdk_path = "%s"\nandroid/keystore/debug = "%s"\nandroid/keystore/debug_user = "androiddebugkey"\nandroid/keystore/debug_password = "android"\n' "$JAVA_DIR" "$HOME/.android/debug.keystore" > "$HOME/.config/godot/editor_settings-4.3.tres"
           echo "--- 覆盖后 settings 内容 ---"
           cat "$HOME/.config/godot/editor_settings-4.3.tres"
+          echo "--- Godot 实际读取值 ---"
+          godot --headless --editor --path "$GITHUB_WORKSPACE" -s res://scripts/ci_diag.gd 2>&1 | grep DIAG
 
       - name: 导出 APK（debug 签名）
         run: |
