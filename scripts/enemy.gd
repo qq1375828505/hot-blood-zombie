@@ -128,6 +128,9 @@ func set_zombie_type(type_name: String) -> void:
 
 func _load_enemy_textures(type: String) -> void:
 	## 根据 e_type 加载对应目录下的丧尸贴图到 AnimatedSprite2D
+	if sprite == null:
+		push_warning("_load_enemy_textures: sprite is null, node not in scene tree yet")
+		return
 	var subdir: String = TYPE_TO_DIR.get(type, "walker")
 
 	# 优先从 idle/ 子目录加载，找不到则回退到根目录

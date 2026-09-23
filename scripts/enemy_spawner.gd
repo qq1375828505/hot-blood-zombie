@@ -93,13 +93,14 @@ func _spawn_next_enemy() -> void:
 		spawn_x = CombatConfig.get_world().get("right_bound", 1220.0) - margin - randi() % 100
 	var spawn_y: float = CombatConfig.get_world().get("ground_y", 560.0) - 30.0
 	enemy.global_position = Vector2(spawn_x, spawn_y)
-	# 设置敌人类型和目标
+	# 先加入场景树，确保 @onready 变量（sprite 等）已初始化
+	add_child(enemy)
+	# 设置敌人类型和目标（内部调用 _load_enemy_textures 切换贴图）
 	if enemy.has_method("setup"):
 		enemy.setup(e_type, player)
 	# 连接死亡信号
 	if enemy.has_signal("died"):
 		enemy.died.connect(_on_enemy_died)
-	add_child(enemy)
 	active_enemies.append(enemy)
 	enemy_count_changed.emit(active_enemies.size(), pending_spawns.size() + active_enemies.size())
 
