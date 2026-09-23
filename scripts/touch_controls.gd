@@ -32,9 +32,8 @@ var p2_touch_enabled: bool = false
 
 
 func _ready() -> void:
-	var show_touch := OS.has_feature("mobile")
-	if DisplayServer.is_touchscreen_available():
-		show_touch = true
+	# 强制显示虚拟按键（PC 调试 + 移动端通用）
+	var show_touch := true
 	if not show_touch:
 		visible = false
 		return
