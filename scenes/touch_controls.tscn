@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/touch_controls.gd" id="1_tc"]
 
@@ -58,6 +58,11 @@ corner_radius_top_right = 28
 corner_radius_bottom_right = 28
 corner_radius_bottom_left = 28
 
+[ext_resource type="Texture2D" path="res://assets/ui/nx_button_a_white.png" id="2_btnA"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_button_b_white.png" id="3_btnB"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_button_x_white.png" id="4_btnX"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_button_y_white.png" id="5_btnY"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_l_stick_white.png" id="6_stick"]
 [node name="TouchControls" type="CanvasLayer"]
 script = ExtResource("1_tc")
 
@@ -124,6 +129,7 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("sb_lg")
 
 [node name="Label" type="Label" parent="BtnShoot"]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -141,6 +147,16 @@ text = "A"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="IconTex" type="TextureRect" parent="BtnShoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("2_btnA")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
 [node name="BtnJump" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 3
@@ -156,6 +172,7 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("sb_md")
 
 [node name="Label" type="Label" parent="BtnJump"]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -173,6 +190,16 @@ text = "B"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="IconTex" type="TextureRect" parent="BtnJump"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("3_btnB")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
 [node name="BtnSpecial" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 3
@@ -188,6 +215,7 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("sb_md")
 
 [node name="Label" type="Label" parent="BtnSpecial"]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -205,6 +233,16 @@ text = "C"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="IconTex" type="TextureRect" parent="BtnSpecial"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("4_btnX")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
 [node name="BtnMelee" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 3
@@ -220,6 +258,7 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("sb_sm")
 
 [node name="Label" type="Label" parent="BtnMelee"]
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -236,6 +275,16 @@ theme_override_font_sizes/font_size = 26
 text = "B"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="IconTex" type="TextureRect" parent="BtnMelee"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("5_btnY")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
 
 [node name="BtnCrouch" type="Panel" parent="."]
 layout_mode = 1
@@ -385,3 +434,13 @@ theme_override_font_sizes/font_size = 16
 text = "重开"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="StickTex" type="TextureRect" parent="JoyBase"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("6_stick")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2

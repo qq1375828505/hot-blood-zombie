@@ -19,6 +19,15 @@ const COL_GOLD_GLOW := Color(1.0, 0.85, 0.30, 0.25)
 const COL_GRAY_BORDER := Color(0.30, 0.30, 0.32, 1)
 const COL_PANEL := Color(0.08, 0.08, 0.10, 1)
 
+# 角色立绘贴图（取自已提取的角色 PNG，000.png 为正面站立帧）
+const AVATAR_TEX := {
+	"pompadour": "res://assets/characters/kunio/000.png",
+	"fighter": "res://assets/characters/riki/000.png",
+	"sprinter": "res://assets/characters/sugata/000.png",
+	"tank": "res://assets/characters/gouda/000.png",
+	"bosozoku": "res://assets/characters/onizuka/000.png",
+}
+
 
 func _ready() -> void:
 	_build_cards()
@@ -75,10 +84,10 @@ func _make_card(char_id: String, data: Dictionary) -> Control:
 	vbox.add_theme_constant_override("separation", 6)
 	card.add_child(vbox)
 
-	# 像素头像（用 ColorRect 拼出简化半身像）
+	# 角色头像（优先使用真实立绘贴图，失败时回退像素半身像）
 	var avatar_wrap := CenterContainer.new()
 	vbox.add_child(avatar_wrap)
-	avatar_wrap.add_child(_make_pixel_avatar(data))
+	avatar_wrap.add_child(_make_pixel_avatar(char_id, data))
 
 	# 角色名
 	var name_lbl := Label.new()
@@ -130,18 +139,32 @@ func _make_card(char_id: String, data: Dictionary) -> Control:
 	return outer
 
 
-# 用 ColorRect 拼一个简化像素半身像：肤色 + 头发 + 角色主色躯干
-func _make_pixel_avatar(data: Dictionary) -> Control:
+# 角色头像：优先用真实立绘贴图，失败时回退到 ColorRect 拼的像素半身像
+func _make_pixel_avatar(char_id: String, data: Dictionary) -> Control:
 	var box := Control.new()
 	box.custom_minimum_size = Vector2(130, 130)
-	var skin := Color(0.95, 0.80, 0.62)
-	var hair := Color(0.08, 0.08, 0.10)
-	var torso: Color = data.get("color", Color.WHITE)
 
+	# 底色
 	var bg := ColorRect.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.color = Color(0.05, 0.05, 0.07, 1)
 	box.add_child(bg)
+
+	# 立绘贴图分支
+	var tex_path: String = AVATAR_TEX.get(char_id, "")
+	if tex_path != "" and ResourceLoader.exists(tex_path):
+		var tr := TextureRect.new()
+		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tr.texture = load(tex_path)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(tr)
+		return box
+
+	var skin := Color(0.95, 0.80, 0.62)
+	var hair := Color(0.08, 0.08, 0.10)
+	var torso: Color = data.get("color", Color.WHITE)
 
 	# 躯干/肩膀（角色主色）
 	var body := ColorRect.new()

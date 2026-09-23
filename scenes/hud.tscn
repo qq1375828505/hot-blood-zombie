@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
 
@@ -14,6 +14,8 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[ext_resource type="Texture2D" path="res://assets/ui/ui_enemy_gauge_body.png" id="2_gauge"]
+[ext_resource type="Texture2D" path="res://assets/ui/ui_status_textbg.png" id="3_wbg"]
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_hud")
 
@@ -52,6 +54,18 @@ offset_top = 15.0
 offset_right = 286.0
 offset_bottom = 39.0
 color = Color(0.12, 0.12, 0.15, 1)
+
+[node name="HPFrame" type="TextureRect" parent="P1Group"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 86.0
+offset_top = 13.0
+offset_right = 288.0
+offset_bottom = 41.0
+texture = ExtResource("2_gauge")
+expand_mode = 1
+stretch_mode = 0
+mouse_filter = 2
 
 [node name="HPFill" type="ColorRect" parent="P1Group"]
 layout_mode = 1
@@ -178,6 +192,18 @@ offset_right = 172.0
 offset_bottom = 23.0
 color = Color(0.12, 0.12, 0.15, 1)
 
+[node name="HPFrame2" type="TextureRect" parent="P2Group"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 36.0
+offset_top = -1.0
+offset_right = 174.0
+offset_bottom = 25.0
+texture = ExtResource("2_gauge")
+expand_mode = 1
+stretch_mode = 0
+mouse_filter = 2
+
 [node name="HPFill2" type="ColorRect" parent="P2Group"]
 layout_mode = 1
 anchors_preset = 0
@@ -274,6 +300,17 @@ offset_right = 257.0
 offset_bottom = 97.0
 color = Color(0.08, 0.08, 0.10, 0.97)
 
+[node name="WeaponBgTex" type="TextureRect" parent="WeaponPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("3_wbg")
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.35)
+mouse_filter = 2
+
 [node name="DPad" type="Control" parent="WeaponPanel"]
 layout_mode = 1
 anchors_preset = 0
@@ -360,6 +397,17 @@ offset_top = 3.0
 offset_right = 257.0
 offset_bottom = 97.0
 color = Color(0.08, 0.08, 0.10, 0.97)
+
+[node name="WeaponBgTex2" type="TextureRect" parent="WeaponPanel2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("3_wbg")
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 1, 1, 0.35)
+mouse_filter = 2
 
 [node name="DPad2" type="Control" parent="WeaponPanel2"]
 layout_mode = 1
