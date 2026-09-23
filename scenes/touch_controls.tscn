@@ -1,6 +1,11 @@
 [gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/touch_controls.gd" id="1_tc"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_button_a_white.png" id="2_btnA"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_button_b_white.png" id="3_btnB"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_button_x_white.png" id="4_btnX"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_button_y_white.png" id="5_btnY"]
+[ext_resource type="Texture2D" path="res://assets/ui/nx_l_stick_white.png" id="6_stick"]
 
 [sub_resource type="StyleBoxFlat" id="sb_pad"]
 bg_color = Color(0.9, 0.9, 0.95, 0.6)
@@ -58,11 +63,6 @@ corner_radius_top_right = 28
 corner_radius_bottom_right = 28
 corner_radius_bottom_left = 28
 
-[ext_resource type="Texture2D" path="res://assets/ui/nx_button_a_white.png" id="2_btnA"]
-[ext_resource type="Texture2D" path="res://assets/ui/nx_button_b_white.png" id="3_btnB"]
-[ext_resource type="Texture2D" path="res://assets/ui/nx_button_x_white.png" id="4_btnX"]
-[ext_resource type="Texture2D" path="res://assets/ui/nx_button_y_white.png" id="5_btnY"]
-[ext_resource type="Texture2D" path="res://assets/ui/nx_l_stick_white.png" id="6_stick"]
 [node name="TouchControls" type="CanvasLayer"]
 script = ExtResource("1_tc")
 

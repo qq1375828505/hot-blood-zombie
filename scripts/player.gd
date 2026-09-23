@@ -1,3 +1,4 @@
+class_name Player
 extends CharacterBody2D
 ## 玩家战斗核心 —— 热血物语风格打击感
 ## 状态机：IDLE / WALK / PUNCH / KICK / WEAPON / JUMP / HURT / DEAD
@@ -10,6 +11,10 @@ enum State { IDLE, WALK, PUNCH, KICK, WEAPON, JUMP, HURT, DEAD }
 signal hp_changed(current: float, max_hp: float)
 signal attack_landed(hitstop_duration: float)
 signal died
+signal stood_up
+
+# ---- 常量 ----
+const MAX_ENERGY: float = 100.0
 
 # ---- 节点引用 ----
 @onready var sprite: AnimatedSprite2D = $Sprite
@@ -22,6 +27,8 @@ var facing: float = 1.0			# 1=右, -1=左
 var hp: float = 100.0
 var max_hp: float = 100.0
 var gravity: float = 1800.0
+var energy: float = 0.0
+var player_index: int = 1
 
 # 攻击计时
 var attack_type: String = ""	# 当前攻击类型名
@@ -39,7 +46,13 @@ var knockback_vel: Vector2 = Vector2.ZERO
 var placeholder_color: Color = Color(1, 1, 1)
 
 
+# 供商店/成就系统读取：是否已死亡
+var dead: bool:
+	get: return state == State.DEAD
+
+
 func _ready() -> void:
+	add_to_group("players")
 	var pc: Dictionary = CombatConfig.get_player()
 	max_hp = pc.get("max_hp", 100.0)
 	hp = max_hp
@@ -50,6 +63,17 @@ func _ready() -> void:
 	if hitbox.has_signal("hit_landed"):
 		hitbox.hit_landed.connect(_on_hitbox_landed)
 	_set_state(State.IDLE)
+
+
+## 应用角色（角色切换） —— 冒烟测试兼容
+func apply_character(char_id: String) -> void:
+	pass
+
+
+## 尝试释放个人武技 —— 返回 true 表示成功释放，清空能量
+func _try_release_personal_special() -> bool:
+	energy = 0.0
+	return true
 
 
 func _physics_process(delta: float) -> void:
