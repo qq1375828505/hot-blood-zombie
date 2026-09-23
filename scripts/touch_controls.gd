@@ -32,7 +32,7 @@ var p2_touch_enabled: bool = false
 
 
 func _ready() -> void:
-	# 强制显示虚拟按键（PC 调试 + 移动端通用）
+	# 移动端应用：虚拟按键强制显示，打开游戏即出现
 	var show_touch := true
 	if not show_touch:
 		visible = false
