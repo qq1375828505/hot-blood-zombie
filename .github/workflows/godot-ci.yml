@@ -30,12 +30,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 无头导入（检查脚本/场景错误）
+        shell: bash
         run: |
           set -euo pipefail
           cd "$GITHUB_WORKSPACE"
           godot --headless --import 2>&1 | tail -20
 
       - name: 运行冒烟测试
+        shell: bash
         run: |
           set -euo pipefail
           cd "$GITHUB_WORKSPACE"
@@ -51,6 +53,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 准备 debug keystore
+        shell: bash
         run: |
           mkdir -p ~/.android
           if [ ! -f ~/.android/debug.keystore ]; then
@@ -61,6 +64,7 @@ jobs:
           fi
 
       - name: 配置导出模板与编辑器设置
+        shell: bash
         run: |
           set -e
           echo "HOME=$HOME  XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-<未设置>}  ANDROID_HOME=${ANDROID_HOME:-<未设置>}"
@@ -100,6 +104,7 @@ jobs:
           cat "$HOME/.config/godot/editor_settings-4.3.tres"
 
       - name: 导出 APK（debug 签名）
+        shell: bash
         run: |
           set -euo pipefail
           cd "$GITHUB_WORKSPACE"
@@ -132,6 +137,7 @@ jobs:
 
       - name: 生成版本号
         id: ver
+        shell: bash
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
