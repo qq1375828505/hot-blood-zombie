@@ -1,0 +1,14 @@
+角色贴图提取日志
+输出目录: /home/user/Doubao/chats/38443725384655106/hot-blood-zombie/assets/characters
+
+=== 汇总 ===
+kunio (国夫·转生): 成功=1657, 失败=0, PNG数=1657, 目录=/home/user/Doubao/chats/38443725384655106/hot-blood-zombie/assets/characters/kunio
+riki (阿力·改): 成功=669, 失败=0, PNG数=669, 目录=/home/user/Doubao/chats/38443725384655106/hot-blood-zombie/assets/characters/riki
+onizuka (暴走族总长·鬼冢): 成功=287, 失败=0, PNG数=287, 目录=/home/user/Doubao/chats/38443725384655106/hot-blood-zombie/assets/characters/onizuka
+sugata (疾风): 成功=250, 失败=0, PNG数=250, 目录=/home/user/Doubao/chats/38443725384655106/hot-blood-zombie/assets/characters/sugata
+gouda (铁壁): 成功=247, 失败=0, PNG数=247, 目录=/home/user/Doubao/chats/38443725384655106/hot-blood-zombie/assets/characters/gouda
+
+总计: 成功=3110, 失败=0
+
+=== 失败明细 ===
+(无失败记录)

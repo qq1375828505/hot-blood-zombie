@@ -57,6 +57,7 @@ func _run() -> void:
 	_test_v23_boss_taunts()
 	_test_v23_boss_visual_nodes()
 	_test_v23_level5_arena()
+	_test_export_config()
 	print("== 全部通过 ==")
 	quit(0)
 
@@ -1717,3 +1718,29 @@ func _test_v23_level5_arena() -> void:
 	assert(label != null and label.text == "决 斗", "V2.3 标语文本为 决 斗")
 	l5.queue_free()
 	print("v23 level5 arena ok")
+
+
+# ---- 导出配置冒烟：关键场景 preload + Autoload 脚本加载 + CombatConfig ----
+func _test_export_config() -> void:
+	# 1) 关键场景能 preload（load 成功即 ext_resource 引用全部可解析）
+	var main_scene := load("res://scenes/main.tscn")
+	assert(main_scene != null, "main.tscn preload 成功")
+	var player_scene := load("res://scenes/player.tscn")
+	assert(player_scene != null, "player.tscn preload 成功")
+	var enemy_scene := load("res://scenes/enemy.tscn")
+	assert(enemy_scene != null, "enemy.tscn preload 成功")
+
+	# 2) 关键 autoload 脚本能加载
+	var economy_script := load("res://scripts/economy.gd")
+	assert(economy_script != null, "Economy (economy.gd) 加载成功")
+	var ach_script := load("res://scripts/achievements.gd")
+	assert(ach_script != null, "Achievements (achievements.gd) 加载成功")
+	var cd_script := load("res://scripts/character_data.gd")
+	assert(cd_script != null, "CharacterData (character_data.gd) 加载成功")
+
+	# 3) CombatConfig 能返回玩家和敌人配置
+	var pc: Dictionary = CombatConfig.get_player()
+	assert(pc.has("max_hp") and pc.has("walk_speed"), "CombatConfig.get_player() 返回玩家配置")
+	var ec: Dictionary = CombatConfig.get_enemy("zombie_normal")
+	assert(ec.size() > 0, "CombatConfig.get_enemy(\"zombie_normal\") 返回敌人配置")
+	print("export config smoke ok")

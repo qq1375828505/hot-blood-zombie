@@ -1,7 +1,9 @@
 extends CanvasLayer
-# 移动端触摸控件 V2.0：左下角常驻半透明大摇杆 + 右下角 ABC 大圆按钮组（王者荣耀风）。
-# 通过 Input.action_press / Input.action_release 驱动已注册输入动作。
-# 按钮为 Panel + StyleBoxFlat（corner_radius 做圆），按下时提亮。
+# 移动端触摸控件 V2.1：左下角常驻半透明大摇杆 + 右下角大圆按钮组。
+# 强制显示：打开游戏即出现虚拟按键，不做设备检测。
+# 摇杆：左右 = move_left/move_right（按住），上 = jump（轻点），下 = crouch（按住）。
+# 右下红按钮=拳(punch)、蓝按钮=跳(jump)、黄按钮=武器(weapon)、白按钮=脚踢(kick)。
+# 按钮通过 Input.action_press / Input.action_release 驱动已注册输入动作，与键盘共用同一套 action。
 
 const DEAD_ZONE := 15.0
 const KNOB_RADIUS := 55.0
@@ -25,6 +27,7 @@ var joy_base: Panel
 var joy_knob: Panel
 var joy_index := -1
 var joy_h_dir := ""
+var joy_v_dir := ""
 var buttons: Dictionary = {}
 var custom_buttons: Dictionary = {}
 
@@ -32,22 +35,18 @@ var p2_touch_enabled: bool = false
 
 
 func _ready() -> void:
-	# 移动端应用：虚拟按键强制显示，打开游戏即出现
-	var show_touch := true
-	if not show_touch:
-		visible = false
-		return
+	# 强制显示虚拟按键：不做设备检测，打开游戏即出现
+	visible = true
 
 	joy_area = $JoyArea
 	joy_base = $JoyArea/JoyBase
 	joy_knob = $JoyArea/JoyBase/JoyKnob
-	# 摇杆始终可见（不再触摸时才显示）
 	joy_base.visible = true
 
-	_register_button("BtnShoot", "shoot", SHOOT_NORMAL, SHOOT_PRESSED)
+	_register_button("BtnShoot", "punch", SHOOT_NORMAL, SHOOT_PRESSED)
 	_register_button("BtnJump", "jump", JUMP_NORMAL, JUMP_PRESSED)
-	_register_button("BtnMelee", "melee", WHITE_NORMAL, WHITE_PRESSED)
-	_register_button("BtnSpecial", "special", SPECIAL_NORMAL, SPECIAL_PRESSED)
+	_register_button("BtnMelee", "kick", WHITE_NORMAL, WHITE_PRESSED)
+	_register_button("BtnSpecial", "weapon", SPECIAL_NORMAL, SPECIAL_PRESSED)
 	_register_button("BtnCrouch", "crouch", SMALL_NORMAL, SMALL_PRESSED)
 	_register_button("BtnRestart", "restart", CUSTOM_NORMAL, CUSTOM_PRESSED)
 
@@ -181,6 +180,8 @@ func _move_knob(world_pos: Vector2) -> void:
 	if off.length() > KNOB_RADIUS:
 		off = off.normalized() * KNOB_RADIUS
 	joy_knob.position = joy_base.size * 0.5 - joy_knob.size * 0.5 + off
+
+	# ---- 水平轴：左右移动（按住） ----
 	var h := off.x
 	if absf(h) > DEAD_ZONE:
 		var dir := "right" if h > 0.0 else "left"
@@ -191,9 +192,28 @@ func _move_knob(world_pos: Vector2) -> void:
 	else:
 		_release_h_dir()
 
+	# ---- 垂直轴：上 = 跳（轻点），下 = 蹲（按住） ----
+	var v := off.y
+	if v < -DEAD_ZONE:
+		# 上推 → 跳（仅在进入上推边缘时触发一次）
+		if joy_v_dir != "up":
+			_release_v_dir()
+			Input.action_press("jump")
+			Input.action_release("jump")
+			joy_v_dir = "up"
+	elif v > DEAD_ZONE:
+		# 下推 → 蹲（按住）
+		if joy_v_dir != "down":
+			_release_v_dir()
+			Input.action_press("crouch")
+			joy_v_dir = "down"
+	else:
+		_release_v_dir()
+
 
 func _release_joy() -> void:
 	_release_h_dir()
+	_release_v_dir()
 	joy_index = -1
 	# 摇杆底座常驻：只复位 knob，不隐藏
 	joy_knob.position = joy_base.size * 0.5 - joy_knob.size * 0.5
@@ -205,6 +225,12 @@ func _release_h_dir() -> void:
 	elif joy_h_dir == "right":
 		Input.action_release("move_right")
 	joy_h_dir = ""
+
+
+func _release_v_dir() -> void:
+	if joy_v_dir == "down":
+		Input.action_release("crouch")
+	joy_v_dir = ""
 
 
 func _is_game_over() -> bool:

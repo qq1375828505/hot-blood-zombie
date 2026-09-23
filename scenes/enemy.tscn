@@ -1,0 +1,43 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_enemy"]
+[ext_resource type="Texture2D" path="res://assets/enemies/normal/spr_000.png" id="2_enemy_tex"]
+[ext_resource type="Texture2D" path="res://assets/enemies/normal/spr_001.png" id="3_enemy_tex"]
+
+[sub_resource type="CircleShape2D" id="body_shape"]
+radius = 22.0
+
+[sub_resource type="RectangleShape2D" id="attack_shape"]
+size = Vector2(55, 50)
+
+[sub_resource type="SpriteFrames" id="enemy_frames"]
+animations = [{
+"frames": [ExtResource("2_enemy_tex"), ExtResource("3_enemy_tex")],
+"loop": true,
+"name": &"idle",
+"speed": 4.0
+}]
+
+[node name="Enemy" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_enemy")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("body_shape")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -22)
+scale = Vector2(1.5, 1.5)
+sprite_frames = SubResource("enemy_frames")
+animation = &"idle"
+playing = true
+
+[node name="AttackHitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackHitbox"]
+position = Vector2(35, -22)
+shape = SubResource("attack_shape")

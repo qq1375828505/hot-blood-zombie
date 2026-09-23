@@ -31,13 +31,15 @@ jobs:
 
       - name: 无头导入（检查脚本/场景错误）
         run: |
+          set -euo pipefail
           cd "$GITHUB_WORKSPACE"
-          godot --headless --import 2>&1 | tail -5
+          godot --headless --import 2>&1 | tail -20
 
       - name: 运行冒烟测试
         run: |
+          set -euo pipefail
           cd "$GITHUB_WORKSPACE"
-          godot --headless --path . --script res://tests/smoke.gd 2>&1 | tail -8
+          godot --headless --path . --script res://tests/smoke.gd 2>&1 | tail -20
 
   export-android:
     name: 导出安卓 APK
@@ -99,6 +101,7 @@ jobs:
 
       - name: 导出 APK（debug 签名）
         run: |
+          set -euo pipefail
           cd "$GITHUB_WORKSPACE"
           # Godot 4.3 通过环境变量兜底 keystore 的 user/password（preset 留空时）
           export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$HOME/.android/debug.keystore"
