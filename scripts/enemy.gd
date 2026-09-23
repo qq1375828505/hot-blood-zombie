@@ -105,23 +105,37 @@ func _physics_process(delta: float) -> void:
 
 
 # ============================================================
-# 贴图加载：按敌人类型从 assets/enemies/<type>/ 加载帧
+# 贴图加载：按敌人类型从 assets/enemies/<type>/idle/ 加载帧
 # ============================================================
+# 类型 → 贴图目录映射（对齐 enemy_defs.gd 中的敌人种类）
+const TYPE_TO_DIR := {
+	"zombie_normal": "walker",
+	"zombie_fast": "runner",
+	"zombie_heavy": "fat",
+	"walker": "walker",
+	"runner": "runner",
+	"fat": "fat",
+	"delinquent": "delinquent",
+	"bosozoku": "bosozoku",
+	"bosozoku_leader": "bosozoku_leader",
+	"zombie_butcher": "zombie_butcher",
+}
+
+func set_zombie_type(type_name: String) -> void:
+	## 公开接口：由 spawner 调用，切换敌人贴图
+	_load_enemy_textures(type_name)
+
+
 func _load_enemy_textures(type: String) -> void:
 	## 根据 e_type 加载对应目录下的丧尸贴图到 AnimatedSprite2D
-	var subdir := ""
-	match type:
-		"zombie_normal":
-			subdir = "normal"
-		"zombie_fast":
-			subdir = "fast"
-		"zombie_heavy":
-			subdir = "heavy"
-		_:
-			subdir = "normal"
+	var subdir: String = TYPE_TO_DIR.get(type, "walker")
 
-	var dir_path := "res://assets/enemies/%s/" % subdir
+	# 优先从 idle/ 子目录加载，找不到则回退到根目录
+	var dir_path := "res://assets/enemies/%s/idle/" % subdir
 	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		dir_path = "res://assets/enemies/%s/" % subdir
+		dir = DirAccess.open(dir_path)
 	if dir == null:
 		push_warning("Enemy texture dir not found: " + dir_path)
 		return
@@ -326,6 +340,9 @@ func die() -> void:
 	# 倒地旋转
 	sprite.rotation = 90.0 * deg_to_rad(1.0)
 	_set_sprite_color(Color(0.3, 0.3, 0.3))
+	# 掉落金币（按敌人类型）：普通10 / 快速20 / 重装50
+	var coin_reward: int = {"zombie_normal": 10, "zombie_fast": 20, "zombie_heavy": 50}.get(enemy_type, 10)
+	Economy.add_coins(coin_reward)
 	died.emit(self)
 
 

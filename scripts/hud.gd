@@ -6,6 +6,8 @@ extends CanvasLayer
 @onready var wave_label: Label = $WaveLabel
 @onready var enemy_label: Label = $EnemyLabel
 @onready var center_msg: Label = $CenterMsg
+@onready var kills_label: Label = get_node_or_null("KillsLabel")
+@onready var coins_label: Label = get_node_or_null("CoinsLabel")
 
 var player: Node2D = null
 var spawner: Node = null
@@ -30,6 +32,18 @@ func setup(player_ref: Node2D, spawner_ref: Node) -> void:
 	_on_hp_changed(player.hp, player.max_hp)
 	wave_label.text = "准备..."
 	enemy_label.text = "敌人: 0"
+	set_kills(0)
+	set_coins(Economy.coins)
+
+
+func set_kills(n: int) -> void:
+	if kills_label:
+		kills_label.text = "击倒 %d" % n
+
+
+func set_coins(n: int) -> void:
+	if coins_label:
+		coins_label.text = "金币 %d" % n
 
 
 func _on_hp_changed(current: float, max_hp: float) -> void:

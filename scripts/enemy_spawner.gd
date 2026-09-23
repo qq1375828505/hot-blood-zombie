@@ -6,6 +6,7 @@ signal wave_started(wave_num: int)
 signal wave_cleared(wave_num: int)
 signal all_waves_cleared
 signal enemy_count_changed(active: int, total_remaining: int)
+signal enemy_died(enemy)
 
 @export var enemy_scene: PackedScene		# 敌人场景（enemy.tscn）
 @export var player_path: NodePath		# 玩家路径
@@ -105,6 +106,7 @@ func _spawn_next_enemy() -> void:
 
 func _on_enemy_died(enemy) -> void:
 	active_enemies.erase(enemy)
+	enemy_died.emit(enemy)
 	enemy_count_changed.emit(active_enemies.size(), pending_spawns.size() + active_enemies.size())
 
 

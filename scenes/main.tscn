@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/touch_controls.tscn" id="3_touch"]
 [ext_resource type="Script" path="res://scripts/enemy_spawner.gd" id="4_spawner"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5_hud"]
+[ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="6_enemy"]
 
 [sub_resource type="RectangleShape2D" id="ground_shape"]
 size = Vector2(1280, 60)
@@ -53,6 +54,8 @@ position = Vector2(320, 540)
 
 [node name="EnemySpawner" type="Node2D" parent="."]
 script = ExtResource("4_spawner")
+enemy_scene = ExtResource("6_enemy")
+player_path = NodePath("../Player")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("5_hud")
@@ -103,6 +106,52 @@ theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
 theme_override_font_sizes/font_size = 18
 text = "敌人: 0"
 horizontal_alignment = 2
+
+[node name="KillsLabel" type="Label" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -180.0
+offset_top = 44.0
+offset_right = -20.0
+offset_bottom = 66.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "击倒 0"
+horizontal_alignment = 2
+
+[node name="CoinsLabel" type="Label" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -180.0
+offset_top = 68.0
+offset_right = -20.0
+offset_bottom = 90.0
+theme_override_colors/font_color = Color(1, 0.78, 0.25, 1)
+theme_override_font_sizes/font_size = 16
+text = "金币 0"
+horizontal_alignment = 2
+
+[node name="GameOver" type="PanelContainer" parent="HUD"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -80.0
+offset_right = 240.0
+offset_bottom = 80.0
+
+[node name="Msg" type="Label" parent="HUD/GameOver"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.4, 1)
+theme_override_font_sizes/font_size = 24
+text = "你死了！按重开键再来一局"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="CenterMsg" type="Label" parent="HUD"]
 anchors_preset = 8
