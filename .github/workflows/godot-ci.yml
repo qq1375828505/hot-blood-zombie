@@ -116,9 +116,9 @@ jobs:
           if-no-files-found: error
 
   release:
-    name: 发布 Release（打 tag 时）
+    name: 发布 Release（push 自动发布）
     needs: export-android
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: 下载 APK 产物
@@ -127,8 +127,19 @@ jobs:
           name: android-apk
           path: build/android/
 
+      - name: 生成版本号
+        id: ver
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=auto-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+          fi
+
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: 自动构建 ${{ steps.ver.outputs.tag }}
           files: build/android/hot-blood-zombie.apk
           generate_release_notes: true
